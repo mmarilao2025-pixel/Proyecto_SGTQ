@@ -1,4 +1,4 @@
-const db = require('./Database'); 
+const db = require('./config/Database'); 
 
 async function agendarCirugiaAtomica(rutPaciente, pabellonId, camaId, tipoCirugia, fechaInicio, fechaFin) {
     const pool = db.getPool();
