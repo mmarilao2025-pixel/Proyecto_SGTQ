@@ -1,0 +1,39 @@
+{
+  "name": "sgtq",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Turnos Quirúrgicos - SGTQ",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "build": "tsc --project config/tsconfig.json",
+    "test": "jest",
+    "install:win": "scripts\\verify-structure.bat && scripts\\install.bat",
+    "install:unix": "bash scripts/verify-structure.sh && bash scripts/install.sh",
+    "verify": "scripts\\verify-structure.bat",
+    "db:init": "node database/db-init.js"
+  },
+  "keywords": [
+    "surgical",
+    "management",
+    "hospital",
+    "scheduling"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1",
+    "cors": "^2.8.5",
+    "typescript": "^5.3.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "@types/node": "^20.10.6",
+    "@types/express": "^4.17.21",
+    "jest": "^29.7.0"
+  }
+}
