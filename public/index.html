@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGTQ - Dashboard de Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes pulse-red {
+            0%, 100% { background-color: #fee2e2; border-color: #fca5a5; }
+            50% { background-color: #fecaca; border-color: #ef4444; }
+        }
+        .animate-emergency { animation: pulse-red 2s infinite; }
+        .sidebar-item:hover { background-color: #f8fafc; color: #1e3a8a; }
+        .sidebar-item.active { background-color: #eff6ff; color: #1e40af; border-right: 4px solid #1e40af; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <div id="root" class="flex h-screen overflow-hidden">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0">
+            <div class="p-6">
+                <div class="flex items-center gap-2">
+                    <div class="bg-blue-900 text-white font-bold p-1 rounded text-xl">SGTQ</div>
+                    <div class="text-xs text-gray-500 leading-tight">Gestión<br>Quirúrgica</div>
+                </div>
+                <div class="mt-6 flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-bold">JP</div>
+                    <div>
+                        <p class="text-xs font-bold">Dr. Jefe Pabellón</p>
+                        <p class="text-[10px] text-gray-400">Jefe de Pabellón</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="flex-1 px-4 space-y-1">
+                <a href="#dashboard" class="sidebar-item active flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium">
+                    <i class="fa-solid fa-chart-line w-5"></i> Dashboard
+                </a>
+                <a href="#cirugia" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-500">
+                    <i class="fa-solid fa-scissors w-5"></i> Cirugías
+                </a>
+                <a href="#personal" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-500">
+                    <i class="fa-solid fa-user-doctor w-5"></i> Personal
+                </a>
+                <a href="#camas" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-500">
+                    <i class="fa-solid fa-bed-pulse w-5"></i> Camas UCI
+                </a>
+                <a href="#inventario" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-500">
+                    <i class="fa-solid fa-boxes-stacked w-5"></i> Inventario
+                </a>
+                <a href="#validador" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-500">
+                    <i class="fa-solid fa-clipboard-check w-5"></i> Validador
+                </a>
+            </nav>
+
+            <div class="p-4 border-t border-gray-100 text-gray-400">
+                <a href="#config" class="sidebar-item flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium">
+                    <i class="fa-solid fa-gear w-5"></i> Configuración
+                </a>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+            
+            <!-- HEADER -->
+            <header class="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-8">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-700">Dashboard de Control</h2>
+                    <p class="text-xs text-gray-400">War Room Quirúrgico</p>
+                </div>
+                <div class="flex items-center gap-6">
+                    <button id="emergencyBtn" class="flex items-center gap-2 px-4 py-1.5 rounded-full border border-red-200 text-red-700 text-sm font-bold hover:animate-emergency">
+                        <i class="fa-solid fa-triangle-exclamation"></i> MODO EMERGENCIA
+                    </button>
+                    <div class="text-right border-l pl-6 border-gray-100 text-gray-500">
+                        <p class="text-sm font-semibold" id="currentDate"></p>
+                        <p class="text-xs" id="currentTime"></p>
+                    </div>
+                </div>
+            </header>
+
+            <!-- DASHBOARD GRID -->
+            <div class="p-8 overflow-y-auto">
+                <div class="grid grid-cols-12 gap-6">
+                    
+                    <!-- LADO IZQUIERDO: CRONOGRAMA -->
+                    <div class="col-span-12 lg:col-span-8">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 h-full min-h-[400px]">
+                            <h3 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                                <i class="fa-solid fa-calendar-day text-blue-600"></i> Cronograma de Pabellones
+                            </h3>
+                            <!-- Área de Visualización Gantt -->
+                            <div id="ganttChart" class="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl h-64 flex flex-col items-center justify-center text-gray-400">
+                                <i class="fa-solid fa-grip-lines-vertical text-3xl mb-2"></i>
+                                <p class="text-sm">Área de Visualización Gantt Real-time</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LADO DERECHO: CARDS DE ESTADO -->
+                    <div class="col-span-12 lg:col-span-4 space-y-6">
+                        
+                        <!-- Equipo Quirúrgico -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-gray-700 text-sm">Equipo Quirúrgico</h3>
+                                <span id="activeTeamCount" class="bg-green-100 text-green-700 text-[10px] px-2 py-0.5 rounded-full font-bold">0 activos</span>
+                            </div>
+                            <div id="teamList" class="space-y-4">
+                                <!-- Dinámicamente poblado -->
+                            </div>
+                        </div>
+
+                        <!-- Recursos Críticos -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                            <h3 class="font-bold text-gray-700 text-sm mb-6">Recursos Críticos</h3>
+                            <div class="flex justify-around items-center text-center">
+                                <div>
+                                    <div class="w-16 h-16 rounded-full border-[6px] border-red-500 flex items-center justify-center mb-2">
+                                        <span id="uciPercentage" class="text-sm font-bold">0%</span>
+                                    </div>
+                                    <p class="text-[10px] font-bold text-gray-500">Camas UCI</p>
+                                </div>
+                                <div>
+                                    <div class="w-16 h-16 rounded-full border-[6px] border-green-500 flex items-center justify-center mb-2">
+                                        <span id="bloodPercentage" class="text-sm font-bold">0%</span>
+                                    </div>
+                                    <p class="text-[10px] font-bold text-gray-500">Sangre</p>
+                                </div>
+                                <div>
+                                    <div class="w-16 h-16 rounded-full border-[6px] border-green-400 flex items-center justify-center mb-2">
+                                        <span id="suppliesPercentage" class="text-sm font-bold">0%</span>
+                                    </div>
+                                    <p class="text-[10px] font-bold text-gray-500">Insumos OK</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Actualizar hora y fecha
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('es-ES', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        }
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+
+        // Cargar datos iniciales
+        async function loadDashboardData() {
+            try {
+                const response = await fetch('/api/dashboard');
+                const data = await response.json();
+                
+                // Actualizar recursos
+                document.getElementById('uciPercentage').textContent = data.uciAvailability + '%';
+                document.getElementById('bloodPercentage').textContent = data.bloodSupply + '%';
+                document.getElementById('suppliesPercentage').textContent = data.suppliesStatus + '%';
+                
+                // Actualizar equipo
+                document.getElementById('activeTeamCount').textContent = data.activeTeam.length + ' activos';
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+            }
+        }
+
+        // Cargar datos al iniciar
+        loadDashboardData();
+        setInterval(loadDashboardData, 30000); // Actualizar cada 30 segundos
+    </script>
+</body>
+</html>
