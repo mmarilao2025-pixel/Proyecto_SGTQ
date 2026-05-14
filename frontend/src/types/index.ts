@@ -47,6 +47,19 @@ export interface ValidacionCirugia {
   mensaje: string;
   id?: string;
   error?: string;
+  detalles?: Array<{ regla: string; pasa: boolean; descripcion: string; prioridad: number; severidad: string }>;
+}
+
+export interface EventStats {
+  totalEventos: number;
+  eventosActivos: number;
+  tiposEventos: Record<string, number>;
+  ultimoEvento: {
+    tipo: string;
+    datos: any;
+    timestamp: string;
+    id: string;
+  };
 }
 
 export interface EntradaFatiga {
@@ -55,29 +68,4 @@ export interface EntradaFatiga {
   puntajeFatiga: number;
   estado: 'normal' | 'alerta' | 'critico';
   fechaHora: string;
-}
-
-export interface FatigueSummary {
-  avgFatigue: number;
-  criticalCases: number;
-  alertCases: number;
-  highRiskCount: number;
-  legalLimitHours: number;
-}
-
-export type SyncStatusLevel = 'NORMAL' | 'RIESGO' | 'CRÍTICO';
-
-export interface SyncStatus {
-  area: 'Admisión' | 'Pabellón' | 'Inventario' | 'Recuperación';
-  status: SyncStatusLevel;
-  details: string;
-  updatedAt: string;
-}
-
-export interface DashboardPayload {
-  resources: Resources;
-  activeTeam: TeamMember[];
-  surgeries: Surgery[];
-  fatigueSummary: FatigueSummary;
-  syncStatus: SyncStatus[];
 }
