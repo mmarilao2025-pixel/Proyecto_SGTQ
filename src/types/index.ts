@@ -56,3 +56,28 @@ export interface EntradaFatiga {
   estado: 'normal' | 'alerta' | 'critico';
   fechaHora: string;
 }
+
+export interface FatigueSummary {
+  avgFatigue: number;
+  criticalCases: number;
+  alertCases: number;
+  highRiskCount: number;
+  legalLimitHours: number;
+}
+
+export type SyncStatusLevel = 'NORMAL' | 'RIESGO' | 'CRÍTICO';
+
+export interface SyncStatus {
+  area: 'Admisión' | 'Pabellón' | 'Inventario' | 'Recuperación';
+  status: SyncStatusLevel;
+  details: string;
+  updatedAt: string;
+}
+
+export interface DashboardPayload {
+  resources: Resources;
+  activeTeam: TeamMember[];
+  surgeries: Surgery[];
+  fatigueSummary: FatigueSummary;
+  syncStatus: SyncStatus[];
+}
