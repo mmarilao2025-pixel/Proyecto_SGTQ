@@ -1,0 +1,24 @@
+{
+  "name": "proyecto-sgtq",
+  "version": "1.0.0",
+  "description": "Sistema de Gestión de Turnos Quirúrgicos - SGTQ",
+  "main": "backend/server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "nodemon backend/server.js",
+    "db:init": "node shared/database/db-init.js",
+    "test": "node frontend/src/tests/SOLID_Patterns_Tests.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "pg": "^8.11.5",
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "author": "Syntax Error - UCT",
+  "license": "ISC"
+}
