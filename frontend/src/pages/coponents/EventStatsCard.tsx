@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { EventStats } from '../../types';
 
-interface EventStats {
-  totalEventos: number;
-  eventosActivos: number;
-  tiposEventos: Record<string, number>;
-  ultimoEvento: {
-    tipo: string;
-    datos: any;
-    timestamp: string;
-    id: string;
-  };
-}
+// ✅ Archivo movido a src/pages/components/ (carpeta renombrada de 'coponents')
 
 const EventStatsCard: React.FC = () => {
   const [stats, setStats] = useState<EventStats | null>(null);
@@ -32,11 +23,7 @@ const EventStatsCard: React.FC = () => {
       setStats(data);
       setError(null);
     } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('Error desconocido');
-      }
+      setError(err instanceof Error ? err.message : 'Error desconocido');
     } finally {
       setLoading(false);
     }
@@ -75,7 +62,7 @@ const EventStatsCard: React.FC = () => {
               {Object.entries(stats.tiposEventos).map(([tipo, count]) => (
                 <div key={tipo} className="rounded-2xl bg-white p-3 border border-slate-100">
                   <p className="text-xs text-slate-500">{tipo}</p>
-                  <p className="text-lg font-semibold text-slate-900">{count}</p>
+                  <p className="text-lg font-semibold text-slate-900">{count as number}</p>
                 </div>
               ))}
             </div>

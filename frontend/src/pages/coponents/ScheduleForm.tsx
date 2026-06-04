@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import ApiService from '../../serices/api';
+// ✅ FIX: Ruta corregida — carpeta renombrada de 'serices' a 'services'
+import ApiService from '../../services/api';
 
 const ScheduleForm: React.FC = () => {
   const [pacienteId, setPacienteId] = useState(1);
@@ -91,8 +92,7 @@ const ScheduleForm: React.FC = () => {
             disabled={loading}
             className="rounded-2xl bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            {loading ? 'Validando...' : 'Agendar'
-            }
+            {loading ? 'Validando...' : 'Agendar'}
           </button>
           <p className="text-xs text-slate-500">Se validarán todos los requisitos de recursos y fatiga.</p>
         </div>

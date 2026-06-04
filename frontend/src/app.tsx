@@ -1,9 +1,10 @@
 import React from 'react';
 import { DashboardComponent } from './pages/Dashboard';
-import SurgeryList from './pages/coponents/SurgeryList';
-import FatigueCard from './pages/coponents/FatigueCard';
-import EventStatsCard from './pages/coponents/EventStatsCard';
-import ScheduleForm from './pages/coponents/ScheduleForm';
+// ✅ FIX (Raúl): Rutas corregidas — 'coponents' → 'components'
+import SurgeryList from './pages/components/SurgeryList';
+import FatigueCard from './pages/components/FatigueCard';
+import EventStatsCard from './pages/components/EventStatsCard';
+import ScheduleForm from './pages/components/ScheduleForm';
 
 const App: React.FC = () => {
   return (
