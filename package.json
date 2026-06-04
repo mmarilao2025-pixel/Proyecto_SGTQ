@@ -12,6 +12,9 @@
     "preview": "vite preview",
     "db:init": "node shared/database/db-init.js",
     "test": "jest frontend/src/tests/SOLID_Patterns_Tests.js --testEnvironment node"
+    "dev": "nodemon backend/server.js",
+    "db:init": "node shared/database/db-init.js",
+    "test": "node frontend/src/tests/SOLID_Patterns_Tests.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -31,6 +34,10 @@
     "nodemon": "^3.1.0",
     "typescript": "^5.5.3",
     "vite": "^5.3.4"
+    "socket.io": "^4.7.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0" 
   },
   "author": "Syntax Error - UCT",
   "license": "ISC"
