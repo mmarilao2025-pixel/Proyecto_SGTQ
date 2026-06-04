@@ -1,35 +1,26 @@
-import { DatabaseManager } from '../../config/DatabaseManager';
+const Database = require('../../../shared/config/Database');
 
-/**
- * Pruebas unitarias para el patrón Singleton en DatabaseManager.
- * Valida que el Singleton funcione correctamente en el contexto de SGTQ,
- * asegurando una única instancia para conexiones a BD críticas.
- */
-describe('DatabaseManager Singleton - SGTQ', () => {
-    test('Debe retornar la misma instancia en múltiples llamadas', () => {
-        const instance1 = DatabaseManager.getInstance();
-        const instance2 = DatabaseManager.getInstance();
-        expect(instance1).toBe(instance2); // Misma referencia de objeto
+describe('Database Singleton - SGTQ', () => {
+    test('Debe retornar la misma instancia en múltiples imports (Singleton)', () => {
+        const instance1 = require('../../../shared/config/Database');
+        const instance2 = require('../../../shared/config/Database');
+        // Node.js cachea módulos, garantizando instancia única
+        expect(instance1).toBe(instance2);
     });
 
     test('Debe tener un pool de conexiones válido', () => {
-        const instance = DatabaseManager.getInstance();
-        const pool = instance.getPool();
+        const pool = Database.getPool();
         expect(pool).toBeDefined();
-        expect(typeof pool.connect).toBe('function'); // Verifica que sea un Pool de pg
+        expect(typeof pool.connect).toBe('function');
     });
 
-    test('Health check debe retornar boolean y funcionar', async () => {
-        const instance = DatabaseManager.getInstance();
-        const isHealthy = await instance.healthCheck();
-        expect(typeof isHealthy).toBe('boolean');
-        // En un entorno real con BD configurada, debería ser true
+    test('La instancia debe tener método query', () => {
+        expect(typeof Database.query).toBe('function');
     });
 
-    test('Instancia debe ser inmutable después de freeze', () => {
-        const instance = DatabaseManager.getInstance();
+    test('La instancia debe estar congelada (inmutable)', () => {
         expect(() => {
-            (instance as any).pool = null; // Intento de modificación
-        }).toThrow(); // Debería fallar si está congelado
+            (Database as any).pool = null;
+        }).toThrow();
     });
 });
