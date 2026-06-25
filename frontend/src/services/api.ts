@@ -1,4 +1,4 @@
-// ✅ FIX: Este archivo va en src/services/api.ts (carpeta renombrada de 'serices')
+// ✅ FIX: Este archivo va en src/services/api.ts 
 import { Surgery, TeamMember, Resources, ValidacionCirugia } from '../types';
 
 const API_BASE_URL = '/api';
@@ -28,16 +28,18 @@ class ApiService {
     return response.json();
   }
 
-  async scheduleSurgery(
-    pacienteId: number,
-    medicoId: number,
-    tipoCirugia: string,
-    requiereUci: boolean
-  ): Promise<ValidacionCirugia> {
+  async scheduleSurgery(payload: {
+    rut: string;
+    nombre: string;
+    alergias: string;
+    medicoId: number;
+    tipoCirugia: string;
+    requiereUci: boolean;
+  }): Promise<ValidacionCirugia> {
     const response = await fetch(`${API_BASE_URL}/surgery/schedule`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pacienteId, medicoId, tipoCirugia, requiereUci })
+      body: JSON.stringify(payload)
     });
     return response.json();
   }

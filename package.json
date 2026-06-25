@@ -2,7 +2,7 @@
   "name": "proyecto-sgtq",
   "version": "1.0.0",
   "description": "Sistema de Gestión de Turnos Quirúrgicos",
- "scripts": {
+  "scripts": {
     "start": "node backend/server.js",
     "dev": "vite"
   },
@@ -17,9 +17,10 @@
     "socket.io-client": "^4.7.2"
   },
   "devDependencies": {
-    "@types/node": "^20.9.0",
-    "@types/react": "^18.2.37",
-    "@types/react-dom": "^18.2.15",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.19.43",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^6.0.3",
     "typescript": "^5.2.2",
     "vite": "^8.1.0"

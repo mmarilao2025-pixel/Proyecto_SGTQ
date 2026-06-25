@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config({ path: '../shared/config/env/.env' });
+const db = require('../shared/config/Database');
 const path = require('path');
 const { createServer } = require('http'); 
 const { Server } = require('socket.io');  
@@ -52,42 +53,63 @@ app.get('/api/dashboard', (req, res) => {
 
 /**
  * POST /api/surgery/schedule
+ * Agenda una nueva cirugía: Registra paciente y valida reglas SOLID
  */
 app.post('/api/surgery/schedule', async (req, res) => {
     try {
-        const payload = {
-            pacienteId: req.body.pacienteId,
-            medicoId: req.body.medicoId,
-            tipoCirugia: req.body.tipoCirugia,
-            requiereUci: req.body.requiereUci || false,
-            duracionEstimadaCirugia: req.body.duracionEstimadaCirugia || 4,
-            especialidadRequerida: req.body.especialidadRequerida || (req.body.tipoCirugia && req.body.tipoCirugia.toLowerCase().includes('cardíaca') ? 'Cardiovascular' : 'Cirugía General'),
-            medicoEspecialidad: req.body.medicoEspecialidad || 'Cirugía General',
-            medicamentosPaciente: req.body.medicamentosPaciente || [],
-            medicamentosRequeridos: req.body.medicamentosRequeridos || [],
-            alergiasPaciente: req.body.alergiasPaciente || [],
-            requiereTransfusion: req.body.requiereTransfusion || false,
-            compatibilidadSanguinea: req.body.compatibilidadSanguinea || 'COMPATIBLE',
-            ultimaCirugiaFecha: req.body.ultimaCirugiaFecha || null,
-            tiempoRecuperacionRequerido: req.body.tiempoRecuperacionRequerido || 30,
-            insumos: req.body.insumos || 15,
-            camasUCI: req.body.camasUCI || (req.body.requiereUci ? 3 : 5)
+        const { rut, nombre, alergias, medicoId, tipoCirugia, requiereUci } = req.body;
+
+        if (!rut || !nombre || !medicoId || !tipoCirugia) {
+            return res.status(400).json({ error: 'Faltan datos obligatorios del paciente o cirugía' });
+        }
+
+        const pool = db.getPool();
+        await pool.query(`
+            INSERT INTO Pacientes (rut, nombre, alergias, fecha_nacimiento) 
+            VALUES ($1, $2, $3, '1990-01-01') 
+            ON CONFLICT (rut) DO UPDATE 
+            SET nombre = EXCLUDED.nombre, alergias = EXCLUDED.alergias;
+        `, [rut, nombre, alergias]);
+
+        const payloadSolid = {
+            pacienteId: rut,
+            medicoId: medicoId,
+            tipoCirugia: tipoCirugia,
+            requiereUci: requiereUci || false,
+            duracionEstimadaCirugia: 4,
+            medicoEspecialidad: 'Cirugía General',
+            alergiasPaciente: alergias ? alergias.split(',').map((item) => item.trim()) : [],
+            insumos: 15,
+            camasUCI: requiereUci ? 3 : 5
         };
 
-        if (!payload.pacienteId || !payload.medicoId || !payload.tipoCirugia) {
-            return res.status(400).json({ error: 'Datos incompletos' });
-        }
-
         const facade = new GestorCirugiasFacade();
-        const resultado = await facade.validarYAgendarCirugia(payload);
+        const resultado = await facade.validarYAgendarCirugia(payloadSolid);
 
         if (resultado.exito) {
-            res.json({ exito: true, mensaje: resultado.mensaje, id: Math.random().toString(36).substr(2, 9), detalles: resultado.detalles });
+            const gestorEventos = GestorEventosSingleton.obtenerInstancia();
+            gestorEventos.notificar('cirugia_aprobada', {
+                pacienteRut: rut,
+                medicoId: medicoId,
+                tipoCirugia: tipoCirugia
+            });
+
+            res.json({ 
+                exito: true, 
+                mensaje: resultado.mensaje,
+                id: Math.random().toString(36).substr(2, 9),
+                detalles: resultado.detalles
+            });
         } else {
-            res.status(400).json({ exito: false, error: resultado.mensaje, detalles: resultado.detalles });
+            res.status(400).json({ 
+                exito: false, 
+                error: resultado.mensaje,
+                detalles: resultado.detalles
+            });
         }
     } catch (error) {
-        res.status(500).json({ error: 'Error al agendar cirugía' });
+        console.error('Error en /api/surgery/schedule:', error);
+        res.status(500).json({ error: 'Error interno del servidor al procesar la cirugía' });
     }
 });
 

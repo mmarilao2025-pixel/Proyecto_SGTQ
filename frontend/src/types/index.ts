@@ -16,6 +16,7 @@ export interface TeamMember {
   status: 'DISPONIBLE' | 'ALERTA' | 'BLOQUEADO';
   horasAcumuladas: number;
   disponible: boolean;
+  initials: string;
 }
 
 export interface Resources {
