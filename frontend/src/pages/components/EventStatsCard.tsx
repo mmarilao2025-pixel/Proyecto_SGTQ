@@ -1,22 +1,14 @@
 import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client'; // <-- NUEVO IMPORT
 import { EventStats } from '../../types';
-
-// ✅ Archivo movido a src/pages/components/ (carpeta renombrada de 'coponents')
 
 const EventStatsCard: React.FC = () => {
   const [stats, setStats] = useState<EventStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchStats();
-    const interval = setInterval(fetchStats, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
   const fetchStats = async () => {
     try {
-      setLoading(true);
       const response = await fetch('/api/events/stats');
       if (!response.ok) throw new Error('Error al obtener métricas de eventos');
       const data = await response.json();
@@ -28,6 +20,26 @@ const EventStatsCard: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // 1. Carga inicial
+    fetchStats();
+
+    // 2. Conectar WebSocket
+    const socket = io(); // Se conecta automáticamente al host actual
+
+    // 3. Escuchar eventos en tiempo real del patrón Observer
+    socket.on('hospital_event', (payload) => {
+      console.log('Evento recibido en tiempo real:', payload);
+      // Actualizamos las estadísticas de inmediato sin esperar 30 segundos
+      fetchStats(); 
+    });
+
+    // Limpiar conexión al desmontar
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
