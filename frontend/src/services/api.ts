@@ -60,11 +60,34 @@ class ApiService {
     return response.json();
   }
 
+  async registerPatient(patientData: { 
+    rut: string; 
+    nombre: string; 
+    fechaNacimiento: string; 
+    telefono?: string; 
+    email?: string 
+  }) {
+    const response = await fetch(`${API_BASE_URL}/patients`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patientData)
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Error al registrar paciente');
+    }
+    
+    return data;
+  }
+
   async healthCheck() {
     const response = await fetch(`${API_BASE_URL}/health`);
     if (!response.ok) throw new Error('Servidor no disponible');
     return response.json();
   }
 }
+
 
 export default new ApiService();

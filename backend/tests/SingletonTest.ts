@@ -1,4 +1,4 @@
-const Database = require('../../../shared/config/Database');
+const Database = require('../../shared/config/Database');
 
 describe('Database Singleton - SGTQ', () => {
     test('Debe retornar la misma instancia en múltiples imports (Singleton)', () => {

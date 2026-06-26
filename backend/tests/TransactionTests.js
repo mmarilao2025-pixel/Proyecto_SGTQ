@@ -1,5 +1,5 @@
-const { TransactionService } = require('../database/services/TransactionService');
-const { FatigueTransactionService } = require('../database/services/FatigueTransactionService');
+const { TransactionService } = require('../../shared/api/database/services/TransactionService');
+const { FatigueTransactionService } = require('../../shared/api/database/services/FatigueTransactionService');
 
 /**
  * Pruebas para servicios transaccionales en SGTQ.

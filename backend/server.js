@@ -215,6 +215,47 @@ app.get('/api/patients/:rut', async (req, res) => {
     }
 });
 
+/**
+ * POST /api/patients
+ * Registra un nuevo paciente en la base de datos
+ */
+app.post('/api/patients', async (req, res) => {
+    try {
+        const { rut, nombre, fechaNacimiento, telefono, email } = req.body;
+
+        // Validar campos obligatorios según la BD (001_initial_schema.sql)
+        if (!rut || !nombre || !fechaNacimiento) {
+            return res.status(400).json({ 
+                error: 'Faltan campos obligatorios: rut, nombre o fecha de nacimiento' 
+            });
+        }
+
+        const db = require('../shared/config/Database');
+        
+        const insertQuery = `
+            INSERT INTO Pacientes (rut, nombre, fecha_nacimiento, telefono, email) 
+            VALUES ($1, $2, $3, $4, $5) 
+            RETURNING *;
+        `;
+        
+        const valores = [rut, nombre, fechaNacimiento, telefono || null, email || null];
+        const resultado = await db.query(insertQuery, valores);
+
+        res.status(201).json({
+            exito: true,
+            mensaje: 'Paciente registrado exitosamente',
+            paciente: resultado.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error en /api/patients:', error.message);
+        // Manejo de error si el RUT ya existe (código 23505 en PostgreSQL)
+        if (error.code === '23505') {
+            return res.status(409).json({ error: 'El RUT ingresado ya está registrado en el sistema' });
+        }
+        res.status(500).json({ error: 'Error interno al registrar el paciente' });
+    }
+});
 
 /**
  * GET /api/surgeries
@@ -232,6 +273,76 @@ app.get('/api/surgeries', (req, res) => {
 
 app.get('/api/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// ============ RUTAS DE PACIENTES ============
+
+/**
+ * GET /api/patients/:rut
+ * Busca un paciente por su RUT
+ */
+app.get('/api/patients/:rut', async (req, res) => {
+    try {
+        const { rut } = req.params;
+        const db = require('../shared/config/Database');
+        
+        // Buscamos al paciente en la base de datos
+        const query = 'SELECT * FROM Pacientes WHERE rut = $1';
+        const resultado = await db.query(query, [rut]);
+
+        if (resultado.rows.length === 0) {
+            // Retornamos 404 para que el frontend sepa que debe abrir el formulario de registro
+            return res.status(404).json({ error: 'Paciente no encontrado' });
+        }
+
+        // Si lo encuentra, devuelve los datos
+        res.json(resultado.rows[0]);
+    } catch (error) {
+        console.error('Error en GET /api/patients/:rut:', error.message);
+        res.status(500).json({ error: 'Error al consultar la base de datos' });
+    }
+});
+
+/**
+ * POST /api/patients
+ * Registra un nuevo paciente
+ */
+app.post('/api/patients', async (req, res) => {
+    try {
+        const { rut, nombre, fechaNacimiento, telefono, email } = req.body;
+
+        // Validar campos obligatorios de la tabla
+        if (!rut || !nombre || !fechaNacimiento) {
+            return res.status(400).json({ 
+                error: 'Faltan campos obligatorios: rut, nombre o fecha de nacimiento' 
+            });
+        }
+
+        const db = require('../shared/config/Database');
+        
+        const insertQuery = `
+            INSERT INTO Pacientes (rut, nombre, fecha_nacimiento, telefono, email) 
+            VALUES ($1, $2, $3, $4, $5) 
+            RETURNING *;
+        `;
+        
+        const valores = [rut, nombre, fechaNacimiento, telefono || null, email || null];
+        const resultado = await db.query(insertQuery, valores);
+
+        // Retornamos 201 (Created) con los datos del paciente
+        res.status(201).json({
+            exito: true,
+            mensaje: 'Paciente registrado exitosamente',
+            paciente: resultado.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error en POST /api/patients:', error.message);
+        if (error.code === '23505') { // Código de error de PostgreSQL para "Unique violation"
+            return res.status(409).json({ error: 'El RUT ingresado ya está registrado' });
+        }
+        res.status(500).json({ error: 'Error interno al registrar el paciente' });
+    }
 });
 
 // ============ RUTAS ESTÁTICAS ============

@@ -168,8 +168,8 @@ describe('Design Patterns - Strategy Pattern', () => {
 
 describe('Design Patterns - Singleton Pattern', () => {
   test('Database Singleton garantiza instancia única', () => {
-    const db1 = require('../config/Database');
-    const db2 = require('../config/Database');
+    const db1 = require('../../shared/config/Database');
+    const db2 = require('../../shared/config/Database');
 
     // Misma instancia
     expect(db1).toBe(db2);
