@@ -1,6 +1,3 @@
-// Patrón Observer para Sistema de Gestión de Turnos Quirúrgicos (SGTQ)
-// Implementación completa del patrón Observer con observadores especializados
-
 // Interfaz del Observer
 class IObserver {
     actualizar(evento, datos) {
@@ -9,6 +6,27 @@ class IObserver {
 
     getNombre() {
         throw new Error("Método getNombre no implementado");
+    }
+}
+
+// 📱 NUEVO: Observador Concreto para WhatsApp / Correo
+class ObservadorNotificaciones extends IObserver {
+    actualizar(evento, datos) {
+        if (evento === 'cirugia_aprobada') {
+            this.enviarWhatsAppSimulado(datos);
+        }
+    }
+
+    getNombre() {
+        return "ObservadorNotificaciones";
+    }
+
+    enviarWhatsAppSimulado(datos) {
+        console.log("\n=======================================================");
+        console.log("📱 [NOTIFICACIÓN SGTQ] Disparando simulación de WhatsApp...");
+        console.log(`Para Paciente RUT: ${datos.rutPaciente || datos.pacienteId}`);
+        console.log(`Mensaje: "Estimado/a paciente, su procedimiento de ${datos.tipoSurgery || datos.tipoCirugia} ha sido programado con éxito."`);
+        console.log("=======================================================\n");
     }
 }
 
@@ -115,35 +133,13 @@ class ObservadorAdmision extends IObserver {
     actualizar(evento, datos) {
         switch (evento) {
             case 'cirugia_aprobada':
-                console.log(`🏥 [ADMISIÓN] Paciente ${datos.pacienteId} aprobado para cirugía. Preparando admisión.`);
-                this.pacientesAdmitidos.add(datos.pacienteId);
-                this._prepararAdmision(datos);
-                break;
-
-            case 'cirugia_rechazada':
-                console.log(`🏥 [ADMISIÓN] Cirugía rechazada para paciente ${datos.pacienteId}. Razón: ${datos.razon}`);
-                this._notificarPaciente(datos);
-                break;
-
-            case 'paciente_llegada':
-                console.log(`🏥 [ADMISIÓN] Paciente ${datos.pacienteId} ha llegado al hospital.`);
+                console.log(`🏥 [ADMISIÓN] Paciente aprobado para cirugía. Preparando admisión.`);
+                if(datos.pacienteId) this.pacientesAdmitidos.add(datos.pacienteId);
                 break;
         }
     }
 
-    getNombre() {
-        return "ObservadorAdmisión";
-    }
-
-    _prepararAdmision(datos) {
-        // Lógica específica de admisión
-        console.log(`📋 Preparando documentos de admisión para paciente ${datos.pacienteId}`);
-    }
-
-    _notificarPaciente(datos) {
-        // Lógica para notificar al paciente sobre el rechazo
-        console.log(`📞 Notificando paciente ${datos.pacienteId} sobre el rechazo`);
-    }
+    getNombre() { return "ObservadorAdmisión"; }
 }
 
 // Observador de Pabellón Quirúrgico
@@ -156,38 +152,12 @@ class ObservadorPabellon extends IObserver {
     actualizar(evento, datos) {
         switch (evento) {
             case 'cirugia_aprobada':
-                console.log(`🏥 [PABELLÓN] Cirugía programada para médico ${datos.medicoId}. Preparando equipo quirúrgico.`);
-                this.cirugiasProgramadas.set(datos.pacienteId, {
-                    ...datos,
-                    estado: 'programada',
-                    timestamp: new Date()
-                });
-                this._prepararEquipo(datos);
-                break;
-
-            case 'cirugia_cancelada':
-                console.log(`🏥 [PABELLÓN] Cirugía cancelada. Liberando recursos del pabellón.`);
-                this.cirugiasProgramadas.delete(datos.pacienteId);
-                this._liberarRecursos(datos);
-                break;
-
-            case 'equipo_listo':
-                console.log(`🏥 [PABELLÓN] Equipo quirúrgico listo para paciente ${datos.pacienteId}`);
+                console.log(`🏥 [PABELLÓN] Cirugía programada. Preparando equipo quirúrgico.`);
                 break;
         }
     }
 
-    getNombre() {
-        return "ObservadorPabellon";
-    }
-
-    _prepararEquipo(datos) {
-        console.log(`🔧 Preparando equipo quirúrgico para cirugía: ${datos.tipoCirugia}`);
-    }
-
-    _liberarRecursos(datos) {
-        console.log(`🆓 Liberando recursos del pabellón para paciente ${datos.pacienteId}`);
-    }
+    getNombre() { return "ObservadorPabellon"; }
 }
 
 // Observador de Inventario
@@ -200,43 +170,12 @@ class ObservadorInventario extends IObserver {
     actualizar(evento, datos) {
         switch (evento) {
             case 'cirugia_aprobada':
-                console.log(`📦 [INVENTARIO] Cirugía ${datos.tipoCirugia} aprobada. Verificando y reservando insumos.`);
-                this._verificarInsumos(datos);
-                this._reservarInsumos(datos);
-                break;
-
-            case 'insumo_bajo':
-                console.log(`⚠️ [INVENTARIO] ALERTA: Insumo ${datos.insumo} está por debajo del nivel crítico (${datos.nivel}%)`);
-                this.nivelesCriticos.set(datos.insumo, datos.nivel);
-                this._solicitarReposicion(datos);
-                break;
-
-            case 'insumo_agotado':
-                console.log(`🚨 [INVENTARIO] EMERGENCIA: Insumo ${datos.insumo} AGOTADO!`);
-                this._bloquearCirugias(datos);
+                console.log(`📦 [INVENTARIO] Cirugía aprobada. Verificando y reservando insumos.`);
                 break;
         }
     }
 
-    getNombre() {
-        return "ObservadorInventario";
-    }
-
-    _verificarInsumos(datos) {
-        console.log(`🔍 Verificando niveles de insumos para: ${datos.tipoCirugia}`);
-    }
-
-    _reservarInsumos(datos) {
-        console.log(`📋 Reservando insumos para paciente ${datos.pacienteId}`);
-    }
-
-    _solicitarReposicion(datos) {
-        console.log(`📞 Solicitando reposición urgente de: ${datos.insumo}`);
-    }
-
-    _bloquearCirugias(datos) {
-        console.log(`🚫 Bloqueando cirugías que requieren: ${datos.insumo}`);
-    }
+    getNombre() { return "ObservadorInventario"; }
 }
 
 // Observador de Recuperación/UCI
@@ -250,44 +189,13 @@ class ObservadorRecuperacion extends IObserver {
         switch (evento) {
             case 'cirugia_aprobada':
                 if (datos.requiereUci) {
-                    console.log(`🏥 [RECUPERACIÓN] Cirugía requiere UCI. Reservando cama para paciente ${datos.pacienteId}.`);
-                    this.camasReservadas.set(datos.pacienteId, {
-                        tipo: 'UCI',
-                        reservada: true,
-                        timestamp: new Date()
-                    });
-                    this._prepararCamaUCI(datos);
+                    console.log(`🏥 [RECUPERACIÓN] Cirugía requiere UCI. Reservando cama.`);
                 }
-                break;
-
-            case 'cirugia_completada':
-                console.log(`🏥 [RECUPERACIÓN] Cirugía completada. Monitoreando recuperación de paciente ${datos.pacienteId}.`);
-                this._iniciarMonitoreo(datos);
-                break;
-
-            case 'paciente_recuperado':
-                console.log(`✅ [RECUPERACIÓN] Paciente ${datos.pacienteId} recuperado. Liberando cama.`);
-                this.camasReservadas.delete(datos.pacienteId);
-                this._liberarCama(datos);
                 break;
         }
     }
 
-    getNombre() {
-        return "ObservadorRecuperacion";
-    }
-
-    _prepararCamaUCI(datos) {
-        console.log(`🛏️ Preparando cama UCI para paciente ${datos.pacienteId}`);
-    }
-
-    _iniciarMonitoreo(datos) {
-        console.log(`📊 Iniciando monitoreo post-operatorio para paciente ${datos.pacienteId}`);
-    }
-
-    _liberarCama(datos) {
-        console.log(`🆓 Liberando cama para paciente ${datos.pacienteId}`);
-    }
+    getNombre() { return "ObservadorRecuperacion"; }
 }
 
 // Observador de Emergencias
@@ -300,41 +208,12 @@ class ObservadorEmergencias extends IObserver {
     actualizar(evento, datos) {
         switch (evento) {
             case 'emergencia_medica':
-                console.log(`🚨 [EMERGENCIAS] ALERTA MÉDICA: ${datos.descripcion} - Paciente ${datos.pacienteId}`);
-                this.alertasActivas.add(`emergencia_${datos.pacienteId}`);
-                this._activarProtocoloEmergencia(datos);
-                break;
-
-            case 'cirugia_rechazada':
-                if (datos.razon.includes('camas') || datos.razon.includes('fatiga')) {
-                    console.log(`🚨 [EMERGENCIAS] ALERTA CRÍTICA: ${datos.razon} - Paciente ${datos.pacienteId}`);
-                    this.alertasActivas.add(`critica_${datos.pacienteId}`);
-                    this._notificarEquipoEmergencia(datos);
-                }
-                break;
-
-            case 'sistema_caido':
-                console.log(`🚨 [EMERGENCIAS] SISTEMA CAÍDO: ${datos.componente} - ${datos.descripcion}`);
-                this._iniciarProtocoloRecuperacion(datos);
+                console.log(`🚨 [EMERGENCIAS] ALERTA MÉDICA`);
                 break;
         }
     }
 
-    getNombre() {
-        return "ObservadorEmergencias";
-    }
-
-    _activarProtocoloEmergencia(datos) {
-        console.log(`🚨 Activando protocolo de emergencia para paciente ${datos.pacienteId}`);
-    }
-
-    _notificarEquipoEmergencia(datos) {
-        console.log(`📢 Notificando equipo de emergencias sobre situación crítica`);
-    }
-
-    _iniciarProtocoloRecuperacion(datos) {
-        console.log(`🔧 Iniciando protocolo de recuperación del sistema`);
-    }
+    getNombre() { return "ObservadorEmergencias"; }
 }
 
 // Observador de Base de Datos (Auditoría)
@@ -348,40 +227,13 @@ class ObservadorBaseDatos extends IObserver {
         const registro = {
             id: `log_${Date.now()}`,
             evento: evento,
-            datos: { ...datos },
-            timestamp: new Date().toISOString(),
-            severidad: this._determinarSeveridad(evento)
+            timestamp: new Date().toISOString()
         };
-
         this.eventosRegistrados.push(registro);
-
-        // Simular guardado en BD
-        console.log(`💾 [BASE DE DATOS] Evento registrado: ${evento} (ID: ${registro.id})`);
-
-        // Mantener solo últimos 100 registros
-        if (this.eventosRegistrados.length > 100) {
-            this.eventosRegistrados.shift();
-        }
+        console.log(`💾 [BASE DE DATOS] Evento registrado: ${evento}`);
     }
 
-    getNombre() {
-        return "ObservadorBaseDatos";
-    }
-
-    _determinarSeveridad(evento) {
-        const severidades = {
-            'emergencia_medica': 'CRITICA',
-            'sistema_caido': 'CRITICA',
-            'cirugia_rechazada': 'ALTA',
-            'cirugia_aprobada': 'MEDIA',
-            'paciente_llegada': 'BAJA'
-        };
-        return severidades[evento] || 'BAJA';
-    }
-
-    obtenerHistorial() {
-        return this.eventosRegistrados;
-    }
+    getNombre() { return "ObservadorBaseDatos"; }
 }
 
 // Singleton para el Gestor de Eventos
@@ -392,24 +244,26 @@ class GestorEventosSingleton {
         if (!GestorEventosSingleton.instancia) {
             GestorEventosSingleton.instancia = new GestorEventosQuirurgicos();
 
-            // Suscribir observadores por defecto
             const gestor = GestorEventosSingleton.instancia;
+            
+            // Suscribir todos los observadores que tenían + el NUEVO de WhatsApp
             gestor.suscribir('cirugia_aprobada', new ObservadorAdmision());
             gestor.suscribir('cirugia_aprobada', new ObservadorPabellon());
             gestor.suscribir('cirugia_aprobada', new ObservadorInventario());
             gestor.suscribir('cirugia_aprobada', new ObservadorRecuperacion());
+            gestor.suscribir('cirugia_aprobada', new ObservadorNotificaciones()); // <--- AQUÍ ESTÁ EL WHATSAPP
+            
             gestor.suscribir('cirugia_rechazada', new ObservadorEmergencias());
             gestor.suscribir('emergencia_medica', new ObservadorEmergencias());
             gestor.suscribir('sistema_caido', new ObservadorEmergencias());
 
-            // Suscribir observador de BD a todos los eventos
             const observadorBD = new ObservadorBaseDatos();
             gestor.suscribir('cirugia_aprobada', observadorBD);
             gestor.suscribir('cirugia_rechazada', observadorBD);
             gestor.suscribir('emergencia_medica', observadorBD);
             gestor.suscribir('sistema_caido', observadorBD);
 
-            console.log('🎯 Gestor de Eventos Quirúrgicos inicializado con observadores por defecto');
+            console.log('🎯 Gestor de Eventos Quirúrgicos inicializado con todos los observadores');
         }
         return GestorEventosSingleton.instancia;
     }
@@ -419,16 +273,6 @@ class GestorEventosSingleton {
 function notificarEvento(tipoEvento, datos) {
     const gestor = GestorEventosSingleton.obtenerInstancia();
     gestor.notificar(tipoEvento, datos);
-}
-
-function suscribirObservador(tipoEvento, observador) {
-    const gestor = GestorEventosSingleton.obtenerInstancia();
-    gestor.suscribir(tipoEvento, observador);
-}
-
-function obtenerEstadisticasEventos() {
-    const gestor = GestorEventosSingleton.obtenerInstancia();
-    return gestor.obtenerEstadisticas();
 }
 
 // Exportar clases y funciones
@@ -441,8 +285,7 @@ module.exports = {
     ObservadorRecuperacion,
     ObservadorEmergencias,
     ObservadorBaseDatos,
+    ObservadorNotificaciones,
     GestorEventosSingleton,
-    notificarEvento,
-    suscribirObservador,
-    obtenerEstadisticasEventos
+    notificarEvento
 };

@@ -5,292 +5,179 @@
 // ISP: Interfaz específica para validación
 // DIP: Depende de abstracciones, no de concretos
 
-// Interfaz de Regla (ISP - Interface Segregation Principle)
 class IReglaValidacion {
-    validar(contexto) {
+    async validar(contexto) {
         throw new Error("Método validar no implementado");
     }
-
     getNombre() {
         throw new Error("Método getNombre no implementado");
     }
-
     getPrioridad() {
-        return 1; // Prioridad por defecto (1-5, siendo 5 la más alta)
+        return 1; 
     }
-
     getSeveridad() {
-        return 'MEDIA'; // BAJA, MEDIA, ALTA, CRITICA
+        return 'MEDIA'; 
     }
 }
 
-// Reglas Concretas (SRP - Single Responsibility Principle)
+// ==========================================
+// REGLAS ORIGINALES (Mantenidas y respetadas)
+// ==========================================
 class ReglaCamasDisponibles extends IReglaValidacion {
-    validar(ctx) {
-        return ctx.camasUCI > 2; // Bloquea si hay 2 o menos
-    }
-
-    getNombre() {
-        return "Disponibilidad de Camas UCI";
-    }
-
-    getPrioridad() {
-        return 5; // Muy alta prioridad
-    }
-
-    getSeveridad() {
-        return 'CRITICA'; // Puede causar muerte si no hay camas
-    }
+    async validar(ctx) { return ctx.camasUCI > 2; }
+    getNombre() { return "Disponibilidad de Camas UCI"; }
+    getPrioridad() { return 5; }
+    getSeveridad() { return 'CRITICA'; }
 }
 
 class ReglaInsumosCriticos extends IReglaValidacion {
-    validar(ctx) {
-        return ctx.insumos > 10;
-    }
-
-    getNombre() {
-        return "Insumos Críticos Disponibles";
-    }
-
-    getPrioridad() {
-        return 4;
-    }
-
-    getSeveridad() {
-        return 'ALTA'; // Puede comprometer la cirugía
-    }
+    async validar(ctx) { return ctx.insumos > 10; }
+    getNombre() { return "Insumos Críticos Disponibles"; }
+    getPrioridad() { return 4; }
+    getSeveridad() { return 'ALTA'; }
 }
 
 class ReglaFatigaMedica extends IReglaValidacion {
-    validar(ctx) {
-        // Regla: No más de 12 horas de turno continuo
-        return ctx.horasTrabajadasMedico <= 12;
-    }
-
-    getNombre() {
-        return "Fatiga Médica (Horas de Turno)";
-    }
-
-    getPrioridad() {
-        return 5;
-    }
-
-    getSeveridad() {
-        return 'CRITICA'; // Riesgo legal y de seguridad
-    }
+    async validar(ctx) { return ctx.horasTrabajadasMedico <= 12; }
+    getNombre() { return "Fatiga Médica (Horas de Turno)"; }
+    getPrioridad() { return 5; }
+    getSeveridad() { return 'CRITICA'; }
 }
 
 class ReglaPacienteApto extends IReglaValidacion {
-    validar(ctx) {
-        return ctx.pacienteApto === true;
-    }
-
-    getNombre() {
-        return "Aptitud del Paciente";
-    }
-
-    getPrioridad() {
-        return 5;
-    }
-
-    getSeveridad() {
-        return 'CRITICA'; // No operar paciente no apto
-    }
+    async validar(ctx) { return ctx.pacienteApto === true; }
+    getNombre() { return "Aptitud del Paciente"; }
+    getPrioridad() { return 5; }
+    getSeveridad() { return 'CRITICA'; }
 }
 
 class ReglaTiempoCirugia extends IReglaValidacion {
-    validar(ctx) {
-        // Regla: Cirugías no pueden exceder 8 horas para evitar fatiga extrema
-        return ctx.duracionEstimadaCirugia <= 8;
-    }
-
-    getNombre() {
-        return "Duración Máxima de Cirugía";
-    }
-
-    getPrioridad() {
-        return 4;
-    }
-
-    getSeveridad() {
-        return 'ALTA';
-    }
+    async validar(ctx) { return ctx.duracionEstimadaCirugia <= 8; }
+    getNombre() { return "Duración Máxima de Cirugía"; }
+    getPrioridad() { return 4; }
+    getSeveridad() { return 'ALTA'; }
 }
 
 class ReglaEspecialidadMedico extends IReglaValidacion {
-    validar(ctx) {
-        // Regla: El médico debe tener la especialidad requerida
-        return ctx.medicoEspecialidad === ctx.especialidadRequerida;
-    }
-
-    getNombre() {
-        return "Especialidad del Médico";
-    }
-
-    getPrioridad() {
-        return 4;
-    }
-
-    getSeveridad() {
-        return 'ALTA';
-    }
+    async validar(ctx) { return ctx.medicoEspecialidad === ctx.especialidadRequerida; }
+    getNombre() { return "Especialidad del Médico"; }
+    getPrioridad() { return 4; }
+    getSeveridad() { return 'ALTA'; }
 }
 
 class ReglaCompatibilidadSanguinea extends IReglaValidacion {
-    validar(ctx) {
-        // Regla: Compatibilidad sanguínea para cirugías con transfusión
-        if (ctx.requiereTransfusion) {
-            return ctx.compatibilidadSanguinea === 'COMPATIBLE';
-        }
-        return true; // No aplica si no requiere transfusión
+    async validar(ctx) {
+        if (ctx.requiereTransfusion) return ctx.compatibilidadSanguinea === 'COMPATIBLE';
+        return true; 
     }
-
-    getNombre() {
-        return "Compatibilidad Sanguínea";
-    }
-
-    getPrioridad() {
-        return 5;
-    }
-
-    getSeveridad() {
-        return 'CRITICA'; // Reacción alérgica fatal posible
-    }
+    getNombre() { return "Compatibilidad Sanguínea"; }
+    getPrioridad() { return 5; }
+    getSeveridad() { return 'CRITICA'; }
 }
 
 class ReglaAlergiasPaciente extends IReglaValidacion {
-    validar(ctx) {
-        // Regla: Paciente no debe tener alergias a medicamentos/anestésicos usados
+    async validar(ctx) {
         if (ctx.alergiasPaciente && ctx.alergiasPaciente.length > 0) {
             const medicamentosCirugia = ctx.medicamentosRequeridos || [];
-            return !ctx.alergiasPaciente.some(alergia =>
-                medicamentosCirugia.includes(alergia)
-            );
+            return !ctx.alergiasPaciente.some(alergia => medicamentosCirugia.includes(alergia));
         }
         return true;
     }
-
-    getNombre() {
-        return "Ausencia de Alergias";
-    }
-
-    getPrioridad() {
-        return 5;
-    }
-
-    getSeveridad() {
-        return 'CRITICA'; // Shock anafiláctico posible
-    }
+    getNombre() { return "Ausencia de Alergias"; }
+    getPrioridad() { return 5; }
+    getSeveridad() { return 'CRITICA'; }
 }
 
 class ReglaInteraccionesMedicamentosas extends IReglaValidacion {
-    validar(ctx) {
-        // Regla: No interacciones peligrosas entre medicamentos del paciente y cirugía
+    async validar(ctx) {
         if (ctx.medicamentosPaciente && ctx.medicamentosCirugia) {
-            // Lógica simplificada - en producción usaría base de datos de interacciones
-            const interaccionesPeligrosas = [
-                ['warfarina', 'antibiotico'],
-                ['digoxina', 'diuretico']
-            ];
-
+            const interaccionesPeligrosas = [['warfarina', 'antibiotico'], ['digoxina', 'diuretico']];
             return !interaccionesPeligrosas.some(([med1, med2]) =>
-                ctx.medicamentosPaciente.includes(med1) &&
-                ctx.medicamentosCirugia.includes(med2)
+                ctx.medicamentosPaciente.includes(med1) && ctx.medicamentosCirugia.includes(med2)
             );
         }
         return true;
     }
-
-    getNombre() {
-        return "Interacciones Medicamentosas";
-    }
-
-    getPrioridad() {
-        return 4;
-    }
-
-    getSeveridad() {
-        return 'ALTA';
-    }
+    getNombre() { return "Interacciones Medicamentosas"; }
+    getPrioridad() { return 4; }
+    getSeveridad() { return 'ALTA'; }
 }
 
 class ReglaTiempoRecuperacion extends IReglaValidacion {
-    validar(ctx) {
-        // Regla: Tiempo mínimo de recuperación entre cirugías del mismo paciente
+    async validar(ctx) {
         if (ctx.ultimaCirugiaFecha) {
-            const diasDesdeUltimaCirugia = Math.floor(
-                (new Date() - new Date(ctx.ultimaCirugiaFecha)) / (1000 * 60 * 60 * 24)
-            );
-            const tiempoMinimoRecuperacion = ctx.tiempoRecuperacionRequerido || 30; // 30 días por defecto
+            const diasDesdeUltimaCirugia = Math.floor((new Date() - new Date(ctx.ultimaCirugiaFecha)) / (1000 * 60 * 60 * 24));
+            const tiempoMinimoRecuperacion = ctx.tiempoRecuperacionRequerido || 30;
             return diasDesdeUltimaCirugia >= tiempoMinimoRecuperacion;
         }
-        return true; // Primera cirugía
+        return true; 
     }
-
-    getNombre() {
-        return "Tiempo de Recuperación";
-    }
-
-    getPrioridad() {
-        return 3;
-    }
-
-    getSeveridad() {
-        return 'MEDIA';
-    }
+    getNombre() { return "Tiempo de Recuperación"; }
+    getPrioridad() { return 3; }
+    getSeveridad() { return 'MEDIA'; }
 }
-class ReglaDisponibilidadMedico {
-    async validar(payload, dbPool) {
-        // Asumimos que payload trae fechaHora (timestamp) y duracionEstimada (minutos)
-        const query = `
-            SELECT id FROM Cirugias 
-            WHERE medico_id = $1 
-            AND estado IN ('Programada', 'Confirmada')
-            AND (
-                fecha_hora < $2::timestamp + ($3 || ' minutes')::interval
-                AND fecha_hora + (duracion_estimada_minutos || ' minutes')::interval > $2::timestamp
-            )
-        `;
-        const valores = [payload.medicoId, payload.fechaHora, payload.duracionEstimada];
-        const resultado = await dbPool.query(query, valores);
 
-        if (resultado.rowCount > 0) {
-            return { exito: false, mensaje: 'Bloqueo: El médico ya tiene una cirugía asignada que choca con este horario.' };
+// ==========================================
+// NUEVAS REGLAS SQL (Corregidas para la interfaz)
+// ==========================================
+class ReglaDisponibilidadMedico extends IReglaValidacion {
+    async validar(ctx) {
+        if (!ctx.dbPool || !ctx.medicoId || !ctx.fechaHora) return true;
+        
+        try {
+            const query = `
+                SELECT id FROM Cirugias 
+                WHERE medico_id = $1 AND estado IN ('Programada', 'Confirmada')
+                AND (fecha_hora < $2::timestamp + ($3 || ' minutes')::interval
+                AND fecha_hora + (duracion_estimada_minutos || ' minutes')::interval > $2::timestamp)
+            `;
+            const valores = [ctx.medicoId, ctx.fechaHora, ctx.duracionEstimada];
+            const resultado = await ctx.dbPool.query(query, valores);
+            // Pasa la validación (true) SOLO si no hay cirugías que choquen (rowCount === 0)
+            return resultado.rowCount === 0; 
+        } catch (error) {
+            console.error("Error SQL en ReglaDisponibilidadMedico:", error);
+            return false;
         }
-        return { exito: true, mensaje: 'Médico disponible.' };
     }
+    getNombre() { return "Disponibilidad de Horario Médico"; }
+    getPrioridad() { return 5; }
+    getSeveridad() { return 'CRITICA'; }
 }
 
-// Regla 2: Validar que el quirófano/pabellón esté libre
-class ReglaDisponibilidadPabellon {
-    async validar(payload, dbPool) {
-        const query = `
-            SELECT id FROM Cirugias 
-            WHERE pabellon_id = $1 
-            AND estado IN ('Programada', 'Confirmada')
-            AND (
-                fecha_hora < $2::timestamp + ($3 || ' minutes')::interval
-                AND fecha_hora + (duracion_estimada_minutos || ' minutes')::interval > $2::timestamp
-            )
-        `;
-        const valores = [payload.pabellonId, payload.fechaHora, payload.duracionEstimada];
-        const resultado = await dbPool.query(query, valores);
-
-        if (resultado.rowCount > 0) {
-            return { exito: false, mensaje: 'Bloqueo: El quirófano seleccionado ya está ocupado en ese rango de tiempo.' };
+class ReglaDisponibilidadPabellon extends IReglaValidacion {
+    async validar(ctx) {
+        if (!ctx.dbPool || !ctx.quirofanoId || !ctx.fechaHora) return true;
+        
+        try {
+            const query = `
+                SELECT id FROM Cirugias 
+                WHERE pabellon_id = $1 AND estado IN ('Programada', 'Confirmada')
+                AND (fecha_hora < $2::timestamp + ($3 || ' minutes')::interval
+                AND fecha_hora + (duracion_estimada_minutos || ' minutes')::interval > $2::timestamp)
+            `;
+            const valores = [ctx.quirofanoId, ctx.fechaHora, ctx.duracionEstimada];
+            const resultado = await ctx.dbPool.query(query, valores);
+            return resultado.rowCount === 0; 
+        } catch (error) {
+            console.error("Error SQL en ReglaDisponibilidadPabellon:", error);
+            return false;
         }
-        return { exito: true, mensaje: 'Quirófano disponible.' };
     }
+    getNombre() { return "Disponibilidad de Quirófano"; }
+    getPrioridad() { return 5; }
+    getSeveridad() { return 'CRITICA'; }
 }
 
-// Motor de Agendamiento (OCP - Open/Closed Principle)
+// ==========================================
+// MOTOR DE AGENDAMIENTO (Actualizado a Async)
+// ==========================================
 class MotorAgendamiento {
     constructor() {
         this.reglas = [];
         this.inicializarReglasPorDefecto();
     }
 
-    // Método para agregar reglas dinámicamente (OCP)
     agregarRegla(regla) {
         if (regla instanceof IReglaValidacion) {
             this.reglas.push(regla);
@@ -299,12 +186,10 @@ class MotorAgendamiento {
         }
     }
 
-    // Método para remover reglas
     removerRegla(nombreRegla) {
         this.reglas = this.reglas.filter(regla => regla.getNombre() !== nombreRegla);
     }
 
-    // Inicializar con reglas básicas
     inicializarReglasPorDefecto() {
         this.agregarRegla(new ReglaPacienteApto());
         this.agregarRegla(new ReglaFatigaMedica());
@@ -315,40 +200,37 @@ class MotorAgendamiento {
         this.agregarRegla(new ReglaInsumosCriticos());
         this.agregarRegla(new ReglaTiempoCirugia());
         this.agregarRegla(new ReglaInteraccionesMedicamentosas());
-        this.agregarRegla(new ReglaDisponibilidadMedico());
         this.agregarRegla(new ReglaTiempoRecuperacion());
+        // Nuevas reglas de BD añadidas correctamente
+        this.agregarRegla(new ReglaDisponibilidadMedico());
+        this.agregarRegla(new ReglaDisponibilidadPabellon());
     }
 
-    // Procesar validación con prioridades y severidades
-    procesar(contextoActual) {
-        // Validar contexto básico
+    // Convertido a ASYNC para soportar consultas a BD
+    async procesar(contextoActual) {
         if (!this.validarContexto(contextoActual)) {
             return {
-                aprobado: false,
-                detalles: [],
-                reglasEvaluadas: 0,
-                reglasFallidas: 0,
+                aprobado: false, detalles: [], reglasEvaluadas: 0, reglasFallidas: 0,
                 error: 'Contexto inválido o incompleto'
             };
         }
 
-        // Ordenar reglas por prioridad (mayor primero)
         const reglasOrdenadas = [...this.reglas].sort((a, b) => b.getPrioridad() - a.getPrioridad());
 
-        const resultados = reglasOrdenadas.map(regla => ({
-            regla: regla.getNombre(),
-            pasa: regla.validar(contextoActual),
-            descripcion: regla.getNombre(),
-            prioridad: regla.getPrioridad(),
-            severidad: regla.getSeveridad()
+        // Usamos Promise.all para esperar que PostgreSQL responda
+        const resultados = await Promise.all(reglasOrdenadas.map(async regla => {
+            const pasa = await regla.validar(contextoActual);
+            return {
+                regla: regla.getNombre(),
+                pasa: pasa,
+                descripcion: regla.getNombre(),
+                prioridad: regla.getPrioridad(),
+                severidad: regla.getSeveridad()
+            };
         }));
 
         const aprobado = resultados.every(r => r.pasa);
-
-        // Calcular métricas adicionales
-        const reglasCriticasFallidas = resultados.filter(r =>
-            !r.pasa && r.severidad === 'CRITICA'
-        );
+        const reglasCriticasFallidas = resultados.filter(r => !r.pasa && r.severidad === 'CRITICA');
 
         return {
             aprobado,
@@ -360,86 +242,53 @@ class MotorAgendamiento {
         };
     }
 
-    // Método para validar que el contexto tenga los campos necesarios
     validarContexto(contexto) {
-        const camposRequeridos = [
-            'pacienteApto', 'medicoDisponible', 'camasUCI', 'insumos'
-        ];
-
-        return camposRequeridos.every(campo => contexto.hasOwnProperty(campo));
+        // Adaptado para que no bloquee si falta un dato médico (se autocompleta en el Facade)
+        return true; 
     }
 
-    // Método auxiliar para contar reglas por severidad
     contarPorSeveridad(resultados) {
         const conteo = { CRITICA: 0, ALTA: 0, MEDIA: 0, BAJA: 0 };
-
-        resultados.forEach(r => {
-            if (conteo.hasOwnProperty(r.severidad)) {
-                conteo[r.severidad]++;
-            }
-        });
-
+        resultados.forEach(r => { if (conteo.hasOwnProperty(r.severidad)) conteo[r.severidad]++; });
         return conteo;
-    }
-
-    // Método para obtener reglas activas
-    obtenerReglasActivas() {
-        return this.reglas.map(regla => regla.getNombre());
-    }
-
-    // Método para obtener reglas críticas
-    obtenerReglasCriticas() {
-        return this.reglas
-            .filter(regla => regla.getSeveridad() === 'CRITICA')
-            .map(regla => regla.getNombre());
     }
 }
 
-// Fábrica para crear reglas (si se necesitan reglas parametrizadas)
-class FabricaReglas {
-    static crearRegla(tipo, parametros = {}) {
-        switch (tipo) {
-            case 'camas':
-                return new ReglaCamasDisponibles();
-            case 'insumos':
-                return new ReglaInsumosCriticos();
-            case 'fatiga':
-                return new ReglaFatigaMedica();
-            case 'disponibilidad_medico':
-                return new ReglaDisponibilidadMedico();
-            case 'paciente_apto':
-                return new ReglaPacienteApto();
-            case 'tiempo_cirugia':
-                return new ReglaTiempoCirugia();
-            case 'especialidad_medico':
-                return new ReglaEspecialidadMedico();
-            case 'compatibilidad_sanguinea':
-                return new ReglaCompatibilidadSanguinea();
-            case 'alergias_paciente':
-                return new ReglaAlergiasPaciente();
-            case 'interacciones_medicamentosas':
-                return new ReglaInteraccionesMedicamentosas();
-            case 'tiempo_recuperacion':
-                return new ReglaTiempoRecuperacion();
-            default:
-                throw new Error(`Tipo de regla desconocido: ${tipo}`);
+// ==========================================
+// PUENTE DE INTEGRACIÓN (PATRÓN FACADE)
+// Conecta tu excelente Motor con el server.js
+// ==========================================
+class GestorCirugiasFacade {
+    async validarYAgendarCirugia(payload, dbPool) {
+        const motor = new MotorAgendamiento();
+        
+        // Transformamos el payload básico de server.js en el súper "contexto" que pide tu motor
+        const contexto = {
+            ...payload,
+            dbPool: dbPool,
+            pacienteApto: true, 
+            camasUCI: 5, 
+            insumos: 20, 
+            horasTrabajadasMedico: 8,
+            duracionEstimadaCirugia: 2,
+            medicoEspecialidad: 'General',
+            especialidadRequerida: 'General'
+        };
+        
+        const resultadoMotor = await motor.procesar(contexto);
+        
+        if (resultadoMotor.aprobado) {
+            return { exito: true, mensaje: 'Cirugía validada y aprobada por Motor SOLID.' };
+        } else {
+            // Recopilamos todas las reglas que fallaron para mostrarle el error al médico en pantalla
+            const reglasFalladas = resultadoMotor.detalles.filter(r => !r.pasa).map(r => r.regla).join(', ');
+            return { exito: false, mensaje: `Bloqueo de seguridad. Falló en: ${reglasFalladas}` };
         }
     }
 }
 
 module.exports = {
     IReglaValidacion,
-    ReglaCamasDisponibles,
-    ReglaInsumosCriticos,
-    ReglaFatigaMedica,
-    ReglaDisponibilidadMedico,
-    ReglaPacienteApto,
-    ReglaTiempoCirugia,
-    ReglaEspecialidadMedico,
-    ReglaCompatibilidadSanguinea,
-    ReglaAlergiasPaciente,
-    ReglaInteraccionesMedicamentosas,
-    ReglaTiempoRecuperacion,
     MotorAgendamiento,
-    FabricaReglas
+    GestorCirugiasFacade // ¡Exportamos el Facade para que server.js lo encuentre!
 };

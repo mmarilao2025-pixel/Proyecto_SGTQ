@@ -1,3 +1,4 @@
+const { GestorEventosQuirurgicos, ObservadorNotificaciones } = require('./comportamiento_observador');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config({ path: '../shared/config/env/.env' });
@@ -9,6 +10,7 @@ const { Server } = require('socket.io');
 // Importar servicios
 const { agendarCirugiaAtomica } = require('./cirugiaService');
 const { GestorCirugiasFacade } = require('./SurgeryBookingFacade');
+const { notificarEvento } = require('./comportamiento_observador');
 const { obtenerEstadisticasEventos, GestorEventosSingleton } = require('./comportamiento_observador'); 
 
 const app = express();
@@ -81,8 +83,8 @@ app.post('/api/surgery/schedule', async (req, res) => {
         const facade = new GestorCirugiasFacade(); // O new SurgeryBookingFacade() según el que uses
         const resultado = await facade.validarYAgendarCirugia(payload, pool);
 
-        if (resultado.exito) {
-            // Si no chocan los horarios, guardamos en la Base de Datos
+      if (resultado.exito) {
+            // Guardamos en la base de datos real
             const insertQuery = `
                 INSERT INTO Cirugias (paciente_rut, medico_id, pabellon_id, tipo_cirugia, fecha_hora, duracion_estimada_minutos, estado)
                 VALUES ($1, $2, $3, $4, $5, $6, 'Programada')
@@ -91,17 +93,23 @@ app.post('/api/surgery/schedule', async (req, res) => {
             const valoresInsert = [rutPaciente, medicoId, quirofanoId, tipoCirugia, fechaHora, payload.duracionEstimada];
             const nuevaCirugia = await pool.query(insertQuery, valoresInsert);
 
+            // === INSTANCIACIÓN Y USO DEL PATRÓN OBSERVER ===
+            const gestorEventos = new GestorEventosQuirurgicos();
+            const moduloNotificaciones = new ObservadorNotificaciones();
+            
+            // Suscribimos el observador de WhatsApp al gestor de eventos
+            gestorEventos.suscribir(moduloNotificaciones);
+            
+            // Notificamos el evento pasándole los datos del payload
+            gestorEventos.notificar('cirugia_aprobada', payload);
+            // ===============================================
+
             res.status(200).json({ 
                 exito: true, 
                 mensaje: resultado.mensaje,
                 cirugiaId: nuevaCirugia.rows[0].id
             });
-        } else {
-            // Si el horario choca, enviamos el error al Frontend
-            res.status(400).json({ 
-                exito: false, 
-                error: resultado.mensaje 
-            });
+            
         }
     } catch (error) {
         console.error('Error en /api/surgery/schedule:', error);
@@ -165,6 +173,48 @@ app.get('/api/team', (req, res) => {
         res.status(500).json({ error: 'Error al obtener equipo' });
     }
 });
+
+/**
+ * GET /api/patients/:rut
+ * Consulta la ficha clínica de un paciente específico por su RUT
+ */
+app.get('/api/patients/:rut', async (req, res) => {
+    try {
+        const pool = db.getPool();
+        // Limpiamos el RUT que viene de la URL (quitamos puntos y espacios, dejamos guion)
+        const rutBusqueda = req.params.rut.trim();
+
+        const query = `
+            SELECT 
+                rut, 
+                nombre, 
+                sexo, 
+                prevision, 
+                tipo_sangre AS "tipoSangre", 
+                alergias, 
+                enfermedades_cronicas AS "enfermedadesCronicas"
+            FROM Pacientes 
+            WHERE rut = $1;
+        `;
+
+        const resultado = await pool.query(query, [rutBusqueda]);
+
+        if (resultado.rowCount > 0) {
+            // El paciente existe, devolvemos su ficha clínica con código 200
+            console.log(`🔍 Ficha clínica encontrada para el RUT: ${rutBusqueda}`);
+            return res.status(200).json(resultado.rows[0]);
+        } else {
+            // No existe, devolvemos 404 para que React despliegue el formulario de registro
+            console.log(`⚠️ Paciente no registrado con RUT: ${rutBusqueda}`);
+            return res.status(404).json({ mensaje: 'Paciente no encontrado.' });
+        }
+
+    } catch (error) {
+        console.error('Error al consultar paciente en la base de datos:', error);
+        return res.status(500).json({ error: 'Error interno del servidor al consultar la ficha clínica.' });
+    }
+});
+
 
 /**
  * GET /api/surgeries
