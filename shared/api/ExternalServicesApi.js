@@ -7,7 +7,8 @@ class LaboratorioExternoAPI {
   static async obtenerResultadosPreoperatorios(pacienteId) {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const indice = pacienteId % laboratorioResultados.length;
+        const numeroLimpio = parseInt(String(pacienteId).replace(/[^0-9]/g, '')) || 1;
+        const indice = numeroLimpio % laboratorioResultados.length;
         resolve(laboratorioResultados[indice]);
       }, 300);
     });

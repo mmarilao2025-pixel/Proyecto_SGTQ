@@ -57,59 +57,55 @@ app.get('/api/dashboard', (req, res) => {
  */
 app.post('/api/surgery/schedule', async (req, res) => {
     try {
-        const { rut, nombre, alergias, medicoId, tipoCirugia, requiereUci } = req.body;
+        // 1. Extraemos los datos que envía el frontend (¡Aquí capturamos los nuevos!)
+        const { rutPaciente, tipoCirugia, medicoId, quirofanoId, fechaHora, duracionEstimada } = req.body;
 
-        if (!rut || !nombre || !medicoId || !tipoCirugia) {
-            return res.status(400).json({ error: 'Faltan datos obligatorios del paciente o cirugía' });
+        if (!rutPaciente || !medicoId || !quirofanoId || !fechaHora) {
+            return res.status(400).json({ error: 'Faltan datos obligatorios para agendar.' });
         }
 
-        const pool = db.getPool();
-        await pool.query(`
-            INSERT INTO Pacientes (rut, nombre, alergias, fecha_nacimiento) 
-            VALUES ($1, $2, $3, '1990-01-01') 
-            ON CONFLICT (rut) DO UPDATE 
-            SET nombre = EXCLUDED.nombre, alergias = EXCLUDED.alergias;
-        `, [rut, nombre, alergias]);
-
-        const payloadSolid = {
-            pacienteId: rut,
-            medicoId: medicoId,
+        // 2. Armamos el Payload para el Motor SOLID
+        const payload = {
+            rutPaciente: rutPaciente,
             tipoCirugia: tipoCirugia,
-            requiereUci: requiereUci || false,
-            duracionEstimadaCirugia: 4,
-            medicoEspecialidad: 'Cirugía General',
-            alergiasPaciente: alergias ? alergias.split(',').map((item) => item.trim()) : [],
-            insumos: 15,
-            camasUCI: requiereUci ? 3 : 5
+            medicoId: medicoId,
+            quirofanoId: quirofanoId,
+            fechaHora: fechaHora,
+            duracionEstimada: duracionEstimada || 60,
+            medicoHoras: 30 // Simulado para la validación
         };
 
-        const facade = new GestorCirugiasFacade();
-        const resultado = await facade.validarYAgendarCirugia(payloadSolid);
+        const pool = db.getPool();
+
+        // 3. Ejecutamos el Facade (Aquí ocurre la magia de las validaciones de horario)
+        const facade = new GestorCirugiasFacade(); // O new SurgeryBookingFacade() según el que uses
+        const resultado = await facade.validarYAgendarCirugia(payload, pool);
 
         if (resultado.exito) {
-            const gestorEventos = GestorEventosSingleton.obtenerInstancia();
-            gestorEventos.notificar('cirugia_aprobada', {
-                pacienteRut: rut,
-                medicoId: medicoId,
-                tipoCirugia: tipoCirugia
-            });
+            // Si no chocan los horarios, guardamos en la Base de Datos
+            const insertQuery = `
+                INSERT INTO Cirugias (paciente_rut, medico_id, pabellon_id, tipo_cirugia, fecha_hora, duracion_estimada_minutos, estado)
+                VALUES ($1, $2, $3, $4, $5, $6, 'Programada')
+                RETURNING id;
+            `;
+            const valoresInsert = [rutPaciente, medicoId, quirofanoId, tipoCirugia, fechaHora, payload.duracionEstimada];
+            const nuevaCirugia = await pool.query(insertQuery, valoresInsert);
 
-            res.json({ 
+            res.status(200).json({ 
                 exito: true, 
                 mensaje: resultado.mensaje,
-                id: Math.random().toString(36).substr(2, 9),
-                detalles: resultado.detalles
+                cirugiaId: nuevaCirugia.rows[0].id
             });
         } else {
+            // Si el horario choca, enviamos el error al Frontend
             res.status(400).json({ 
                 exito: false, 
-                error: resultado.mensaje,
-                detalles: resultado.detalles
+                error: resultado.mensaje 
             });
         }
     } catch (error) {
         console.error('Error en /api/surgery/schedule:', error);
-        res.status(500).json({ error: 'Error interno del servidor al procesar la cirugía' });
+        res.status(500).json({ error: 'Error interno del servidor al procesar la cirugía.' });
     }
 });
 

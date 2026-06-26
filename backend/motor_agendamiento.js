@@ -80,24 +80,6 @@ class ReglaFatigaMedica extends IReglaValidacion {
     }
 }
 
-class ReglaDisponibilidadMedico extends IReglaValidacion {
-    validar(ctx) {
-        return ctx.medicoDisponible === true;
-    }
-
-    getNombre() {
-        return "Disponibilidad del Médico";
-    }
-
-    getPrioridad() {
-        return 3;
-    }
-
-    getSeveridad() {
-        return 'ALTA';
-    }
-}
-
 class ReglaPacienteApto extends IReglaValidacion {
     validar(ctx) {
         return ctx.pacienteApto === true;
@@ -255,6 +237,49 @@ class ReglaTiempoRecuperacion extends IReglaValidacion {
 
     getSeveridad() {
         return 'MEDIA';
+    }
+}
+class ReglaDisponibilidadMedico {
+    async validar(payload, dbPool) {
+        // Asumimos que payload trae fechaHora (timestamp) y duracionEstimada (minutos)
+        const query = `
+            SELECT id FROM Cirugias 
+            WHERE medico_id = $1 
+            AND estado IN ('Programada', 'Confirmada')
+            AND (
+                fecha_hora < $2::timestamp + ($3 || ' minutes')::interval
+                AND fecha_hora + (duracion_estimada_minutos || ' minutes')::interval > $2::timestamp
+            )
+        `;
+        const valores = [payload.medicoId, payload.fechaHora, payload.duracionEstimada];
+        const resultado = await dbPool.query(query, valores);
+
+        if (resultado.rowCount > 0) {
+            return { exito: false, mensaje: 'Bloqueo: El médico ya tiene una cirugía asignada que choca con este horario.' };
+        }
+        return { exito: true, mensaje: 'Médico disponible.' };
+    }
+}
+
+// Regla 2: Validar que el quirófano/pabellón esté libre
+class ReglaDisponibilidadPabellon {
+    async validar(payload, dbPool) {
+        const query = `
+            SELECT id FROM Cirugias 
+            WHERE pabellon_id = $1 
+            AND estado IN ('Programada', 'Confirmada')
+            AND (
+                fecha_hora < $2::timestamp + ($3 || ' minutes')::interval
+                AND fecha_hora + (duracion_estimada_minutos || ' minutes')::interval > $2::timestamp
+            )
+        `;
+        const valores = [payload.pabellonId, payload.fechaHora, payload.duracionEstimada];
+        const resultado = await dbPool.query(query, valores);
+
+        if (resultado.rowCount > 0) {
+            return { exito: false, mensaje: 'Bloqueo: El quirófano seleccionado ya está ocupado en ese rango de tiempo.' };
+        }
+        return { exito: true, mensaje: 'Quirófano disponible.' };
     }
 }
 

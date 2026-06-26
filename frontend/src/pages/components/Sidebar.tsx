@@ -26,6 +26,44 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
         </div>
       </div>
 
+      <div className="space-y-2 px-4">
+  <button 
+    onClick={() => setActiveView('cronograma')} 
+    className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${activeView === 'cronograma' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+  >
+    <i className="fa-solid fa-calendar-days w-5"></i> Cronograma
+  </button>
+
+  <button 
+    onClick={() => setActiveView('equipo')} 
+    className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${activeView === 'equipo' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+  >
+    <i className="fa-solid fa-user-doctor w-5"></i> Equipo Médico
+  </button>
+
+  {/* NUEVA SECCIÓN APARTE PARA PACIENTES */}
+  <button 
+    onClick={() => setActiveView('pacientes')} 
+    className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${activeView === 'pacientes' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+  >
+    <i className="fa-solid fa-id-card w-5"></i> Ficha Clínica
+  </button>
+
+  <button 
+    onClick={() => setActiveView('agendamiento')} 
+    className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${activeView === 'agendamiento' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+  >
+    <i className="fa-solid fa-book-medical w-5"></i> Agendamiento
+  </button>
+
+  <button 
+    onClick={() => setActiveView('auditoria')} 
+    className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition ${activeView === 'auditoria' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
+  >
+    <i className="fa-solid fa-shield-halved w-5"></i> Auditoría y Recursos
+  </button>
+</div>
+
       {/* Navegación */}
       <nav className="flex-1 px-4 py-6 space-y-2">
         {menuItems.map((item) => (
