@@ -19,9 +19,9 @@ class Database {
         this.pool = new Pool({
             host:     process.env.DB_HOST     || 'localhost',
             port:     parseInt(process.env.DB_PORT) || 5432,
-            database: process.env.DB_NAME     || 'sgtq_db',
+            database: process.env.DB_NAME     || 'SGTQ_SyntaxError',
             user:     process.env.DB_USER     || 'postgres',
-            password: process.env.DB_PASSWORD || 'postgres',
+            password: process.env.DB_PASSWORD || '123456',
             // Pool settings para concurrencia (NFR-1: 50 solicitudes concurrentes)
             max:              20,
             idleTimeoutMillis: 30000,
