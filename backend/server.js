@@ -16,13 +16,22 @@ const { obtenerEstadisticasEventos, GestorEventosSingleton } = require('./compor
 const app = express();
 const PORT = process.env.PORT || 3000;
 const distPath = path.join(__dirname, 'dist');
-
 // Configuración de Servidor HTTP y WebSockets
 const httpServer = createServer(app); 
 const io = new Server(httpServer, {    
     cors: { origin: "*" }
 });
+const { obtenerInsumos } = require('./insumoService');
 
+// GET /api/insumos — Lista todos los insumos con su stock actual
+app.get('/api/insumos', async (req, res) => {
+    try {
+        const insumos = await obtenerInsumos();
+        res.json(insumos);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener insumos' });
+    }
+});
 // Middlewares
 app.use(cors());
 app.use(express.json());
@@ -131,18 +140,25 @@ app.get('/api/events/stats', (req, res) => {
  */
 app.post('/api/surgery/atomic', async (req, res) => {
     try {
-        const { rutPaciente, pabellonId, camaId, tipoCirugia, fechaInicio, fechaFin } = req.body;
+        const { rutPaciente, pabellonId, camaId, tipoCirugia, fechaInicio, fechaFin,
+                requiereTransfusion, tipoSangre, litrosSangre } = req.body;
+
         if (!rutPaciente || !pabellonId || !camaId || !tipoCirugia) {
             return res.status(400).json({ error: 'Datos incompletos' });
         }
-        const resultado = await agendarCirugiaAtomica(rutPaciente, pabellonId, camaId, tipoCirugia, fechaInicio, fechaFin);
+
+        const resultado = await agendarCirugiaAtomica(
+            rutPaciente, pabellonId, camaId, tipoCirugia, fechaInicio, fechaFin,
+            requiereTransfusion, tipoSangre, litrosSangre
+        );
+
         if (resultado.exito) res.json(resultado);
         else res.status(400).json(resultado);
+
     } catch (error) {
         res.status(500).json({ error: 'Error en transacción de cirugía' });
     }
 });
-
 /**
  * GET /api/resources
  */

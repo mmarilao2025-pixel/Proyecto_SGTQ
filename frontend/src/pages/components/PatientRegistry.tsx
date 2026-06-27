@@ -1,14 +1,6 @@
 import React, { useState } from 'react';
-
-// 1. Interfaz actualizada para coincidir con la Base de Datos
-export interface Paciente {
-  rut: string;
-  nombre: string;
-  fechaNacimiento: string; // CRÍTICO: Requerido por la BD
-  telefono?: string;
-  email?: string;
-}
-
+import { Paciente } from '../../types';
+export type { Paciente }; // re-exporta para que app.tsx siga funcionando
 // Función para validar RUT con algoritmo Módulo 11 (¡Excelente implementación!)
 const validarRUT = (rutCompleto: string): boolean => {
   const rutLimpio = rutCompleto.replace(/[^0-9kK]/g, '').toUpperCase();

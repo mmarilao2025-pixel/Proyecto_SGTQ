@@ -1,6 +1,5 @@
 const db = require('../shared/config/Database'); 
-
-async function agendarCirugiaAtomica(rutPaciente, pabellonId, camaId, tipoCirugia, fechaInicio, fechaFin) {
+async function agendarCirugiaAtomica(rutPaciente, pabellonId, camaId, tipoCirugia, fechaInicio, fechaFin, requiereTransfusion = false, tipoSangre = null, litrosSangre = 2) {
     const pool = db.getPool();
     //CRÍTICO: Para transacciones, debemos "pedir prestado" un cliente específico del pool
     const client = await pool.connect(); 
@@ -23,6 +22,23 @@ async function agendarCirugiaAtomica(rutPaciente, pabellonId, camaId, tipoCirugi
         `;
         const resCirugia = await client.query(insertQuery, [rutPaciente, pabellonId, camaId, tipoCirugia, fechaInicio, fechaFin]);
 
+        //LLAMAR INSUMOS
+        const { descontarInsumoCirugia } = require('./insumoService');
+        if (requiereTransfusion && tipoSangre) {
+            const insumoRes = await client.query(
+                "SELECT id FROM Insumos WHERE categoria = 'sangre' AND tipo = $1",
+                [tipoSangre]
+            );
+            if (insumoRes.rows.length > 0) {
+                await descontarInsumoCirugia(
+                    client,
+                    insumoRes.rows[0].id,
+                    litrosSangre || 2, 
+                    resCirugia.rows[0].id,
+                    `Transfusión en cirugía ${tipoCirugia}`
+                );
+            }
+        }
         //Actualizar el estado de los recursos a 'Reservado'
         await client.query(`UPDATE Pabellones SET estado = 'Reservado' WHERE id = $1`, [pabellonId]);
         await client.query(`UPDATE Camas SET estado = 'Reservado' WHERE id = $1`, [camaId]);
@@ -45,3 +61,4 @@ async function agendarCirugiaAtomica(rutPaciente, pabellonId, camaId, tipoCirugi
 }
 
 module.exports = { agendarCirugiaAtomica };
+

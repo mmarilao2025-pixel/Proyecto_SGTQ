@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-
-// Interfaces (puedes moverlas a tu index.ts de tipos)
-interface Paciente {
-  rut: string;
-  nombre: string;
-  tipoSangre: string;
-  alergias: string;
-  enfermedadesCronicas: string;
-}
-
+import { Paciente } from '../../types';
 interface SurgerySchedulerProps {
   paciente: Paciente; // El paciente validado en el Paso 1
   onSuccess: () => void;

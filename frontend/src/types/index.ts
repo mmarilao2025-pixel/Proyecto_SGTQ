@@ -70,3 +70,22 @@ export interface EntradaFatiga {
   estado: 'normal' | 'alerta' | 'critico';
   fechaHora: string;
 }
+export interface Insumo {
+  id: number;
+  nombre: string;
+  categoria: string;
+  tipo: string | null;
+  cantidad: number;
+  unidad: string;
+  umbral_critico: number;
+}
+export interface Paciente {
+  rut: string;
+  nombre: string;
+  fechaNacimiento?: string;
+  telefono?: string;
+  email?: string;
+  tipoSangre?: string;
+  alergias?: string;
+  enfermedadesCronicas?: string;
+}
