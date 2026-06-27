@@ -135,14 +135,7 @@ const FatigueCard: React.FC = () => {
           </div>
         ))}
       </div>
-
-      {/* Leyenda Informativa */}
-      <div className="mt-6 flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-100">
-        <i className="fa-solid fa-circle-info text-blue-500 mt-0.5"></i>
-        <p className="text-xs text-blue-800 leading-relaxed">
-          <strong>Regla de Agendamiento (BR-2):</strong> El sistema bloquea automáticamente la asignación de quirófanos a médicos que superen el límite de 44 horas semanales para evitar la fatiga.
-        </p>
-      </div>
+      
     </div>
   );
 };
