@@ -7,6 +7,9 @@ export interface Paciente {
   fechaNacimiento: string; // CRÍTICO: Requerido por la BD
   telefono?: string;
   email?: string;
+  tipoSangre: string;
+  alergias: string;
+  enfermedadesCronicas: string;
 }
 
 // Función para validar RUT con algoritmo Módulo 11 (¡Excelente implementación!)
@@ -37,9 +40,15 @@ const PatientRegistry: React.FC<PatientRegistryProps> = ({ onPacienteValidado })
   const [modoRegistro, setModoRegistro] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // 2. Estado del formulario actualizado
+  // 2. Estado del formulario actualizado con datos médicos
   const [formData, setFormData] = useState({
-    nombre: '', fechaNacimiento: '', telefono: '', email: ''
+    nombre: '', 
+    fechaNacimiento: '', 
+    telefono: '', 
+    email: '',
+    tipoSangre: '', 
+    alergias: '', 
+    enfermedadesCronicas: ''
   });
 
   const buscarPaciente = async (e: React.FormEvent) => {
@@ -188,6 +197,18 @@ const PatientRegistry: React.FC<PatientRegistryProps> = ({ onPacienteValidado })
             <label className="block md:col-span-2">
               <span className="text-xs font-semibold text-slate-600">Email</span>
               <input type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} placeholder="correo@ejemplo.com" className="mt-1 block w-full rounded-lg border-slate-300 bg-slate-50 p-2.5 text-sm outline-none" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold text-slate-600">Tipo de Sangre</span>
+              <input type="text" value={formData.tipoSangre} onChange={(e) => setFormData({...formData, tipoSangre: e.target.value})} placeholder="Ej: O+" className="mt-1 block w-full rounded-lg border-slate-300 bg-slate-50 p-2.5 text-sm outline-none" />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold text-slate-600">Alergias</span>
+              <input type="text" value={formData.alergias} onChange={(e) => setFormData({...formData, alergias: e.target.value})} placeholder="Ej: Penicilina o Ninguna" className="mt-1 block w-full rounded-lg border-slate-300 bg-slate-50 p-2.5 text-sm outline-none" />
+            </label>
+            <label className="block md:col-span-2">
+              <span className="text-xs font-semibold text-slate-600">Enfermedades Crónicas</span>
+              <input type="text" value={formData.enfermedadesCronicas} onChange={(e) => setFormData({...formData, enfermedadesCronicas: e.target.value})} placeholder="Ej: Hipertensión o Ninguna" className="mt-1 block w-full rounded-lg border-slate-300 bg-slate-50 p-2.5 text-sm outline-none" />
             </label>
           </div>
           <div className="pt-4 flex justify-end">

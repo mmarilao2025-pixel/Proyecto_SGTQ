@@ -1,3 +1,4 @@
+const { FatigueTransactionService } = require('../shared/api/database/services/FatigueTransactionService');
 const { GestorEventosQuirurgicos, ObservadorNotificaciones } = require('./comportamiento_observador');
 const express = require('express');
 const cors = require('cors');
@@ -300,6 +301,32 @@ app.get('/api/patients/:rut', async (req, res) => {
     } catch (error) {
         console.error('Error en GET /api/patients/:rut:', error.message);
         res.status(500).json({ error: 'Error al consultar la base de datos' });
+    }
+});
+
+/**
+ * POST /api/team/reset-fatigue
+ * Desbloquea a un médico tras su periodo de descanso
+ */
+app.post('/api/team/reset-fatigue', async (req, res) => {
+    try {
+        const { medicoId } = req.body;
+        
+        if (!medicoId) {
+            return res.status(400).json({ error: 'Falta el ID del médico' });
+        }
+
+        const fatigueService = new FatigueTransactionService();
+        const result = await fatigueService.resetFatigue(medicoId);
+
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(400).json(result);
+        }
+    } catch (error) {
+        console.error('Error en /api/team/reset-fatigue:', error);
+        res.status(500).json({ error: 'Error al reiniciar la fatiga del médico' });
     }
 });
 

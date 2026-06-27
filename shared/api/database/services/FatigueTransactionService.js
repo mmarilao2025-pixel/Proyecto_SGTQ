@@ -1,8 +1,45 @@
-const db = require('../../../shared/config/Database');
+const db = require('../../../config/Database');
 
 class FatigueTransactionService {
     static LIMITE_HORAS_SEMANALES = 44;
     static LIMITE_HORAS_TURNO_CONTINUO = 12;
+
+    /**
+     * Reinicia las horas de fatiga de un médico tras cumplir su descanso de 8 horas.
+     * @param {number} medicoId
+     */
+    async resetFatigue(medicoId) {
+        const pool = db.getPool();
+        const client = await pool.connect();
+
+        try {
+            await client.query('BEGIN');
+
+            // Verificamos que el médico exista
+            const check = await client.query('SELECT id FROM Medicos WHERE id = $1 FOR UPDATE', [medicoId]);
+            if (check.rows.length === 0) {
+                throw new Error(`Médico con ID ${medicoId} no encontrado`);
+            }
+
+            // Actualizamos horas a 0 y estado a 'Disponible'
+            await client.query(
+                `UPDATE Medicos 
+                 SET horas_semanales_acumuladas = 0, estado = 'Disponible' 
+                 WHERE id = $1`,
+                [medicoId]
+            );
+
+            await client.query('COMMIT');
+            return { success: true, mensaje: 'Fatiga reiniciada exitosamente' };
+
+        } catch (error) {
+            await client.query('ROLLBACK');
+            console.error('Error en resetFatigue:', error.message);
+            return { success: false, error: error.message };
+        } finally {
+            client.release();
+        }
+    }
 
     /**
      * Valida que el médico no supere el límite de horas y actualiza su registro.

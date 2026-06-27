@@ -1,4 +1,4 @@
-const db = require('../../../shared/config/Database');
+const db = require('../../../config/Database');
 
 class TransactionService {
     /**

@@ -5,6 +5,7 @@ import SurgeryScheduler from './pages/components/SurgeryScheduler';
 import SurgeryList from './pages/components/SurgeryList';
 import FatigueCard from './pages/components/FatigueCard';
 import EventStatsCard from './pages/components/EventStatsCard';
+import FatigueResetCard from './pages/components/FatigueResetCard';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState('cronograma');
@@ -25,7 +26,13 @@ const App: React.FC = () => {
               return <SurgeryList />;
               
             case 'equipo':
-              return <FatigueCard />;
+              // 2. Modificamos la vista de equipo para mostrar ambas tarjetas
+              return (
+                <div className="space-y-6 max-w-4xl mx-auto">
+                  <FatigueCard />
+                  <FatigueResetCard />
+                </div>
+              );
               
             case 'pacientes':
               // La pestaña de Ficha Clínica muestra el buscador y formulario de registro
@@ -39,10 +46,25 @@ const App: React.FC = () => {
               );
               
             case 'agendamiento':
-              // La pestaña de Agendamiento maneja los pabellones y horarios
+              // Si no hay paciente seleccionado, pedimos que seleccione uno
+              if (!pacienteSeleccionado) {
+                return (
+                  <div className="flex flex-col items-center justify-center h-full text-slate-500">
+                    <p className="mb-4">Por favor, valida o registra un paciente primero.</p>
+                    <button 
+                      onClick={() => setActiveView('pacientes')}
+                      className="rounded-lg bg-blue-600 px-4 py-2 text-white transition hover:bg-blue-700"
+                    >
+                      Ir a Ficha Clínica
+                    </button>
+                  </div>
+                );
+              }
+
+              // Si hay paciente, mostramos el agendamiento normal
               return (
                 <SurgeryScheduler 
-                  paciente={pacienteSeleccionado || { rut: '', nombre: '', sexo: '', prevision: '', tipoSangre: '', alergias: '', enfermedadesCronicas: '' }} 
+                  paciente={pacienteSeleccionado} 
                   onSuccess={() => {
                     alert('¡Cirugía agendada con éxito!');
                     setPacienteSeleccionado(null);
