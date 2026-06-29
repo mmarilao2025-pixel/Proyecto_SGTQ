@@ -1,0 +1,67 @@
+name: Testing and SonarQube checks
+
+on:
+  push:
+    branches: [feature/ci-sonarqube]
+  pull_request:
+    branches: [main, Dev]
+
+jobs:
+  test:
+    name: Run Tests & SonarQube Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # fetch-depth 0 obligatorio para que SonarQube analice el historial
+          # completo y calcule correctamente métricas de new code
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      # Equivalente a: uv run pytest  (con --cov-report=xml:coverage.xml)
+      # Jest genera coverage/lcov.info gracias a coverageReporters: ["lcov"]
+      # en jest.config.cjs — es el equivalente al coverage.xml de Python
+      - name: Run tests with coverage
+        run: npm run test:coverage
+        env:
+          CI: true
+
+      # Equivalente al bloque "Verify coverage files" del template del profe
+      - name: Verify coverage files
+        run: |
+          if [ -f coverage/lcov.info ]; then
+            echo "✅ coverage/lcov.info exists"
+            wc -l coverage/lcov.info
+          else
+            echo "❌ coverage/lcov.info NOT found - SonarQube won't have coverage data"
+            exit 1
+          fi
+
+      # Equivalente a: SonarSource/sonarqube-scan-action
+      # Lee sonar-project.properties del raíz del repo
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      # Falla el pipeline si no se alcanza el Quality Gate configurado en SonarQube
+      - name: SonarQube Quality Gate Check
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Report results
+        if: always()
+        run: |
+          echo "✅ Tests and SonarQube analysis complete!"
+          echo "📊 View detailed results at:"
+          echo "${{ secrets.SONAR_HOST_URL }}/dashboard?id=syntaxerror"
