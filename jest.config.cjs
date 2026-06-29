@@ -29,13 +29,18 @@ module.exports = {
   collectCoverageFrom: [
     "backend/**/*.js",
     "backend/**/*.ts",
-    "!backend/tests/**"
+    "shared/**/*.js",
+    "!backend/tests/**",
+    "!backend/server.js"
   ],
 
   coverageDirectory: "coverage",
 
-  coverageReporters: [
-    "text",
-    "lcov"
-  ]
+  // lcov.info es lo que SonarQube lee
+  coverageReporters: ["text", "lcov", "clover"],
+
+  // En CI se excluyen los tests que requieren BD real
+  testPathIgnorePatterns: process.env.CI
+    ? ["<rootDir>/backend/tests/TransactionTests.js"]
+    : []
 };

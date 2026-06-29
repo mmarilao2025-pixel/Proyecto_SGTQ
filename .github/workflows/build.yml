@@ -1,11 +1,11 @@
-name: Build and Analyze
+name: CI - Lint, Test & SonarQube
 
 on:
   push:
     branches:
       - main
       - Dev
-
+      - feature/ci-sonarqube
   pull_request:
     branches:
       - main
@@ -16,26 +16,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout código
+        uses: actions/checkout@v4
         with:
+          # fetch-depth 0 es obligatorio para que SonarQube analice el historial
           fetch-depth: 0
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
+      - name: Instalar dependencias
         run: npm install
 
+      # ── LINT ─────────────────────────────────────────────────────────────────
+      - name: Lint (ESLint)
+        run: npm run lint
+
+      # ── TYPE CHECK ───────────────────────────────────────────────────────────
       - name: TypeScript Check
         run: npm run type-check
 
-      - name: Build Project
+      # ── TESTS + COVERAGE ─────────────────────────────────────────────────────
+      # Los TransactionTests requieren BD real → se excluyen en CI con la
+      # variable de entorno CI=true (que GitHub Actions define automáticamente)
+      - name: Tests con cobertura (Jest)
+        run: npm run test:coverage
+        env:
+          CI: true
+
+      # ── BUILD ─────────────────────────────────────────────────────────────────
+      - name: Build (Vite)
         run: npm run build
 
+      # ── SONARQUBE ─────────────────────────────────────────────────────────────
+      # El archivo coverage/lcov.info generado por Jest es leído por SonarQube
+      # gracias a sonar.javascript.lcov.reportPaths en sonar-project.properties
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
