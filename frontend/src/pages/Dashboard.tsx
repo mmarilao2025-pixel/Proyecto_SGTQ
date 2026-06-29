@@ -78,9 +78,8 @@ export const DashboardComponent: React.FC = () => {
           <h3 className="font-bold text-gray-700 text-sm mb-6">Recursos Críticos</h3>
           <div className="flex justify-around items-center text-center">
             <div>
-              <div className={`w-16 h-16 rounded-full border-[6px] ${
-                dashboard?.uciAvailability! < 20 ? 'border-red-500' : 'border-green-500'
-              } flex items-center justify-center mb-2`}>
+             <div className={`w-16 h-16 rounded-full border-[6px] ${
+                (dashboard?.uciAvailability ?? 0) < 20? 'border-red-500': 'border-green-500'} flex items-center justify-center mb-2`}>
                 <span className="text-sm font-bold">{dashboard?.uciAvailability}%</span>
               </div>
               <p className="text-[10px] font-bold text-gray-500">Camas UCI</p>
