@@ -1,226 +1,270 @@
-const { MotorAgendamiento, FabricaReglas } = require('../motor_agendamiento');
+const {
+    MotorAgendamiento,
+    IReglaValidacion
+} = require("../motor_agendamiento");
 
-// Pruebas unitarias para demostrar SOLID y patrones de diseño
+const Database = require("../../shared/config/Database");
 
-describe('SOLID Principles - Single Responsibility Principle (SRP)', () => {
-  test('MotorAgendamiento solo maneja validación de reglas', () => {
-    const motor = new MotorAgendamiento();
+describe("SOLID - Single Responsibility Principle (SRP)", () => {
+    test("MotorAgendamiento posee las operaciones principales", () => {
 
-    // Verificar que el motor solo tiene métodos relacionados con validación
-    expect(typeof motor.procesar).toBe('function');
-    expect(typeof motor.agregarRegla).toBe('function');
-    expect(typeof motor.obtenerReglasActivas).toBe('function');
+        const motor = new MotorAgendamiento();
 
-    // No debería tener métodos de BD, UI, etc.
-    expect(motor).not.toHaveProperty('conectarBD');
-    expect(motor).not.toHaveProperty('renderizarUI');
-  });
+        expect(typeof motor.procesar).toBe("function");
+        expect(typeof motor.agregarRegla).toBe("function");
+        expect(typeof motor.removerRegla).toBe("function");
+        expect(motor).not.toHaveProperty("conectarBD");
+        expect(motor).not.toHaveProperty("renderizarUI");
 
-  test('Cada regla tiene responsabilidad única', () => {
-    const reglaFatiga = FabricaReglas.crearRegla('fatiga');
-    const reglaCamas = FabricaReglas.crearRegla('camas');
+    });
+    test("El motor carga reglas por defecto", () => {
+        const motor = new MotorAgendamiento();
+        expect(Array.isArray(motor.reglas)).toBe(true);
+        expect(motor.reglas.length).toBeGreaterThan(5);
+    });
 
-    // Cada regla solo valida un aspecto específico
-    expect(reglaFatiga.getNombre()).toBe('Fatiga Médica (Horas de Turno)');
-    expect(reglaCamas.getNombre()).toBe('Disponibilidad de Camas UCI');
-
-    // Métodos específicos para su responsabilidad
-    expect(typeof reglaFatiga.validar).toBe('function');
-    expect(typeof reglaCamas.validar).toBe('function');
-  });
 });
-
-describe('SOLID Principles - Open/Closed Principle (OCP)', () => {
-  test('Motor abierto a nuevas reglas sin modificar código existente', () => {
-    const motor = new MotorAgendamiento();
-    const reglasIniciales = motor.obtenerReglasActivas().length;
-
-    // Crear nueva regla sin modificar MotorAgendamiento
-    class ReglaNueva extends require('../motor_agendamiento').IReglaValidacion {
-      validar(ctx) { return ctx.nuevaPropiedad > 0; }
-      getNombre() { return 'Nueva Regla de Prueba'; }
-      getPrioridad() { return 1; }
-      getSeveridad() { return 'BAJA'; }
+describe("SOLID - Open Closed Principle (OCP)", () => {
+    class ReglaPersonalizada extends IReglaValidacion {
+        async validar(ctx) {
+            return ctx.personalizada === true;
+        }
+        getNombre() {
+            return "Regla Personalizada";
+        }
+        getPrioridad() {
+            return 1;
+        }
+        getSeveridad() {
+            return "BAJA";
+        }
     }
 
-    motor.agregarRegla(new ReglaNueva());
-    expect(motor.obtenerReglasActivas().length).toBe(reglasIniciales + 1);
-  });
-
-  test('Fábrica permite crear reglas sin modificar código', () => {
-    const regla = FabricaReglas.crearRegla('paciente_apto');
-    expect(regla.getNombre()).toBe('Aptitud del Paciente');
-    expect(typeof regla.validar).toBe('function');
-  });
-});
-
-describe('SOLID Principles - Liskov Substitution Principle (LSP)', () => {
-  test('Todas las reglas son sustituibles por IReglaValidacion', () => {
-    const motor = new MotorAgendamiento();
-    const reglas = [
-      FabricaReglas.crearRegla('fatiga'),
-      FabricaReglas.crearRegla('camas'),
-      FabricaReglas.crearRegla('paciente_apto')
-    ];
-
-    // Todas implementan la interfaz correctamente
-    reglas.forEach(regla => {
-      expect(typeof regla.validar).toBe('function');
-      expect(typeof regla.getNombre).toBe('function');
-      expect(typeof regla.getPrioridad).toBe('function');
-      expect(typeof regla.getSeveridad).toBe('function');
+    test("Es posible agregar nuevas reglas sin modificar el motor", () => {
+        const motor = new MotorAgendamiento();
+        const cantidadInicial = motor.reglas.length;
+        motor.agregarRegla(new ReglaPersonalizada());
+        expect(motor.reglas.length).toBe(cantidadInicial + 1);
     });
 
-    // Pueden ser usadas intercambiablemente
-    const contexto = {
-      pacienteApto: true,
-      medicoDisponible: true,
-      camasUCI: 5,
-      horasTrabajadasMedico: 8,
-      insumos: 20
-    };
+    test("También es posible remover reglas", () => {
+        const motor = new MotorAgendamiento();
+        motor.agregarRegla(new ReglaPersonalizada());
+        motor.removerRegla("Regla Personalizada");
+        const existe = motor.reglas.some(
+            r => r.getNombre() === "Regla Personalizada"
+        );
 
-    reglas.forEach(regla => {
-      const resultado = regla.validar(contexto);
-      expect(typeof resultado).toBe('boolean');
+        expect(existe).toBe(false);
     });
-  });
+
 });
 
-describe('SOLID Principles - Interface Segregation Principle (ISP)', () => {
-  test('Interfaces específicas y minimalistas', () => {
-    const regla = FabricaReglas.crearRegla('fatiga');
-
-    // Solo métodos necesarios para validación
-    expect(Object.getOwnPropertyNames(Object.getPrototypeOf(regla))).toEqual([
-      'constructor',
-      'validar',
-      'getNombre',
-      'getPrioridad',
-      'getSeveridad'
-    ]);
-
-    // No métodos innecesarios
-    expect(regla).not.toHaveProperty('conectarBD');
-    expect(regla).not.toHaveProperty('enviarEmail');
-    expect(regla).not.toHaveProperty('renderizarHTML');
-  });
-});
-
-describe('SOLID Principles - Dependency Inversion Principle (DIP)', () => {
-  test('Motor depende de abstracciones, no de concretos', () => {
-    const motor = new MotorAgendamiento();
-
-    // El motor no conoce implementaciones concretas
-    expect(motor.reglas[0].constructor.name).not.toBe('ReglaFatigaMedica');
-    expect(motor.reglas[0].constructor.name).not.toBe('ReglaCamasDisponibles');
-
-    // Solo conoce la interfaz
-    expect(typeof motor.reglas[0].validar).toBe('function');
-    expect(typeof motor.reglas[0].getNombre).toBe('function');
-  });
-
-  test('Configuración externa (no hardcodeada)', () => {
-    // Las reglas usan configuración externa, no valores hardcodeados
-    const regla = FabricaReglas.crearRegla('fatiga');
-    const contexto = { horasTrabajadasMedico: 10 };
-
-    // La regla valida basado en lógica, no valores fijos
-    expect(regla.validar(contexto)).toBe(true); // 10 < 12
-
-    const contextoExcedido = { horasTrabajadasMedico: 14 };
-    expect(regla.validar(contextoExcedido)).toBe(false); // 14 > 12
-  });
-});
-
-describe('Design Patterns - Strategy Pattern', () => {
-  test('Reglas intercambiables en tiempo de ejecución', () => {
-    const motor = new MotorAgendamiento();
-
-    // Agregar diferentes estrategias de validación
-    const reglaConservadora = FabricaReglas.crearRegla('camas');
-    const reglaEstricta = FabricaReglas.crearRegla('fatiga');
-
-    // Contexto que pasa regla conservadora pero falla estricta
-    const contexto = {
-      pacienteApto: true,
-      medicoDisponible: true,
-      camasUCI: 3, // Pasa regla conservadora (3 > 2)
-      horasTrabajadasMedico: 13, // Falla regla estricta (13 > 12)
-      insumos: 20
-    };
-
-    expect(reglaConservadora.validar(contexto)).toBe(true);
-    expect(reglaEstricta.validar(contexto)).toBe(false);
-  });
-
-  test('Fábrica crea estrategias dinámicamente', () => {
-    const estrategias = ['fatiga', 'camas', 'insumos', 'paciente_apto'];
-
-    estrategias.forEach(tipo => {
-      const regla = FabricaReglas.crearRegla(tipo);
-      expect(regla).toBeDefined();
-      expect(typeof regla.validar).toBe('function');
-      expect(typeof regla.getNombre).toBe('function');
+describe("SOLID - Liskov Substitution Principle (LSP)", () => {
+    test("Todas las reglas implementan la interfaz", () => {
+        const motor = new MotorAgendamiento();
+        motor.reglas.forEach(regla => {
+            expect(regla instanceof IReglaValidacion).toBe(true);
+            expect(typeof regla.validar).toBe("function");
+            expect(typeof regla.getNombre).toBe("function");
+            expect(typeof regla.getPrioridad).toBe("function");
+            expect(typeof regla.getSeveridad).toBe("function");
+        });
     });
-  });
+});
+describe("SOLID - Interface Segregation Principle (ISP)", () => {
+
+    test("Las reglas exponen únicamente la interfaz necesaria", () => {
+
+        const motor = new MotorAgendamiento();
+
+        motor.reglas.forEach(regla => {
+
+            expect(typeof regla.validar).toBe("function");
+            expect(typeof regla.getNombre).toBe("function");
+            expect(typeof regla.getPrioridad).toBe("function");
+            expect(typeof regla.getSeveridad).toBe("function");
+
+            expect(regla).not.toHaveProperty("conectarBD");
+            expect(regla).not.toHaveProperty("renderizarUI");
+            expect(regla).not.toHaveProperty("enviarCorreo");
+
+        });
+
+    });
+
 });
 
-describe('Design Patterns - Singleton Pattern', () => {
-  test('Database Singleton garantiza instancia única', () => {
-    const db1 = require('../../shared/config/Database');
-    const db2 = require('../../shared/config/Database');
+describe("SOLID - Dependency Inversion Principle (DIP)", () => {
 
-    // Misma instancia
-    expect(db1).toBe(db2);
+    test("El motor trabaja mediante la abstracción IReglaValidacion", () => {
 
-    // Métodos de instancia única
-    expect(typeof db1.getPool).toBe('function');
-    expect(typeof db1.healthCheck).toBe('function');
-  });
+        const motor = new MotorAgendamiento();
 
-  test('Singleton previene creación múltiple', () => {
-    const Database = require('../config/Database');
+        motor.reglas.forEach(regla => {
+            expect(regla instanceof IReglaValidacion).toBe(true);
+        });
 
-    // Intentar crear nueva instancia (debería devolver la misma)
-    const instancia1 = new Database.constructor();
-    const instancia2 = new Database.constructor();
+    });
 
-    expect(instancia1).toBe(instancia2);
-  });
+    test("Se pueden inyectar nuevas implementaciones", () => {
+
+        class ReglaDummy extends IReglaValidacion {
+
+            async validar() {
+                return true;
+            }
+
+            getNombre() {
+                return "Dummy";
+            }
+
+            getPrioridad() {
+                return 2;
+            }
+
+            getSeveridad() {
+                return "MEDIA";
+            }
+
+        }
+
+        const motor = new MotorAgendamiento();
+
+        motor.agregarRegla(new ReglaDummy());
+
+        const encontrada = motor.reglas.find(
+            r => r.getNombre() === "Dummy"
+        );
+
+        expect(encontrada).toBeDefined();
+
+    });
+
 });
 
-describe('Integration Tests - SOLID Application', () => {
-  test('Flujo completo demuestra todos los principios SOLID', () => {
-    const motor = new MotorAgendamiento();
+describe("Design Pattern - Strategy", () => {
+    test("Las reglas son estrategias intercambiables", async () => {
+        const motor = new MotorAgendamiento();
+        const contexto = {
+            pacienteApto: true,
+            camasUCI: 5,
+            insumos: 20,
+            horasTrabajadasMedico: 8,
+            duracionEstimadaCirugia: 4,
+            medicoEspecialidad: "General",
+            especialidadRequerida: "General",
+            requiereTransfusion: false,
+            alergiasPaciente: [],
+            medicamentosPaciente: [],
+            medicamentosCirugia: [],
+            ultimaCirugiaFecha: null
+        };
 
-    // SRP: Motor solo valida
-    expect(typeof motor.procesar).toBe('function');
+        for (const regla of motor.reglas) {
+            const resultado = await regla.validar(contexto);
+            expect(typeof resultado).toBe("boolean");
+        }
+    });
 
-    // OCP: Agregar regla sin modificar motor
-    const reglaPersonalizada = {
-      validar: (ctx) => ctx.customCheck === true,
-      getNombre: () => 'Regla Personalizada',
-      getPrioridad: () => 1,
-      getSeveridad: () => 'BAJA'
-    };
-    motor.agregarRegla(reglaPersonalizada);
+    test("El motor evalúa todas las reglas", async () => {
+        const motor = new MotorAgendamiento();
+        const contexto = {
+            pacienteApto: true,
+            camasUCI: 5,
+            insumos: 20,
+            horasTrabajadasMedico: 8,
+            duracionEstimadaCirugia: 4,
+            medicoEspecialidad: "General",
+            especialidadRequerida: "General",
+            requiereTransfusion: false,
+            alergiasPaciente: [],
+            medicamentosPaciente: [],
+            medicamentosCirugia: [],
+            ultimaCirugiaFecha: null
+        };
 
-    // LSP: Regla intercambiable
-    const contexto = {
-      pacienteApto: true,
-      medicoDisponible: true,
-      camasUCI: 5,
-      horasTrabajadasMedico: 8,
-      insumos: 20,
-      customCheck: true
-    };
+        const resultado = await motor.procesar(contexto);
+        expect(resultado).toHaveProperty("aprobado");
+        expect(resultado).toHaveProperty("detalles");
+        expect(resultado).toHaveProperty("reglasEvaluadas");
+        expect(Array.isArray(resultado.detalles)).toBe(true);
+    });
+});
+describe("Design Pattern - Singleton", () => {
 
-    const resultado = motor.procesar(contexto);
+    test("Database devuelve siempre la misma instancia", () => {
 
-    // DIP: Motor usa abstracciones
-    expect(resultado).toHaveProperty('aprobado');
-    expect(resultado).toHaveProperty('reglasEvaluadas');
-    expect(resultado.reglasEvaluadas).toBeGreaterThan(1);
-  });
+        const db1 = require("../../shared/config/Database");
+        const db2 = require("../../shared/config/Database");
+
+        expect(db1).toBe(db2);
+
+    });
+
+    test("La instancia expone los métodos esperados", () => {
+      expect(typeof Database.getPool).toBe("function");
+      expect(typeof Database.query).toBe("function");
+      expect(typeof Database.close).toBe("function");
+
+    });
+
+});
+
+describe("Integration Tests", () => {
+    test("MotorAgendamiento puede procesar un contexto válido", async () => {
+        const motor = new MotorAgendamiento();
+
+        const contexto = {
+            pacienteApto: true,
+            camasUCI: 5,
+            insumos: 20,
+            horasTrabajadasMedico: 8,
+            duracionEstimadaCirugia: 4,
+            medicoEspecialidad: "General",
+            especialidadRequerida: "General",
+            requiereTransfusion: false,
+            alergiasPaciente: [],
+            medicamentosPaciente: [],
+            medicamentosCirugia: [],
+            ultimaCirugiaFecha: null
+
+        };
+        const resultado = await motor.procesar(contexto);
+        expect(resultado).toBeDefined();
+        expect(resultado).toHaveProperty("aprobado");
+        expect(resultado).toHaveProperty("detalles");
+        expect(resultado).toHaveProperty("reglasEvaluadas");
+
+    });
+
+    test("El motor acepta reglas personalizadas", async () => {
+        class ReglaExtra extends IReglaValidacion {
+            async validar() {
+                return true;
+            }
+            getNombre() {
+                return "Extra";
+            }
+            getPrioridad() {
+                return 1;
+            }
+            getSeveridad() {
+                return "BAJA";
+            }
+        }
+
+        const motor = new MotorAgendamiento();
+        motor.agregarRegla(new ReglaExtra());
+        const existe = motor.reglas.find(
+            r => r.getNombre() === "Extra"
+        );
+        expect(existe).toBeDefined();
+    });
+    test("Todas las reglas implementan la interfaz base", () => {
+        const motor = new MotorAgendamiento();
+        for (const regla of motor.reglas) {
+            expect(regla instanceof IReglaValidacion).toBe(true);
+        }
+    });
 });

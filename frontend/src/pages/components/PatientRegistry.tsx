@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 
-// 1. Interfaz actualizada para coincidir con la Base de Datos
 export interface Paciente {
   rut: string;
   nombre: string;
-  fechaNacimiento: string; // CRÍTICO: Requerido por la BD
-  telefono?: string;
-  email?: string;
+  sexo: string;
+  prevision: string;
+  tipoSangre: string;
+  alergias: string;
+  enfermedadesCronicas: string;
 }
 
 // Función para validar RUT con algoritmo Módulo 11 (¡Excelente implementación!)
@@ -121,7 +122,7 @@ const PatientRegistry: React.FC<PatientRegistryProps> = ({ onPacienteValidado })
             type="text" 
             placeholder="Ingrese RUT (Ej: 12345678-9)" 
             value={rutBusqueda} 
-            onChange={(e) => setRutBusqueda(e.target.value.replace(/[^0-9kK\-]/g, ''))}
+            onChange={(e) => setRutBusqueda(e.target.value.replace(/[^0-9kK-]/g, ''))}
             className="flex-1 rounded-lg border-slate-300 bg-white px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none shadow-sm" 
           />
           <button type="submit" disabled={loading} className="bg-slate-800 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-slate-700 transition shadow-sm">
