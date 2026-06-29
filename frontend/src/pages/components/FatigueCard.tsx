@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { TeamMember } from '../../types';
+import React, { useState, useEffect } from "react";
+import { TeamMember } from "../../types";
 
 // ✅ FIX (Raúl): FatigueCard ahora consume /api/team en lugar de datos hardcodeados
 
@@ -16,37 +16,41 @@ const FatigueCard: React.FC = () => {
 
   const fetchTeam = async () => {
     try {
-      const response = await fetch('/api/team');
-      if (!response.ok) throw new Error('Error al obtener equipo médico');
+      const response = await fetch("/api/team");
+      if (!response.ok) throw new Error("Error al obtener equipo médico");
       const data: TeamMember[] = await response.json();
       setTeam(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
     }
   };
 
   // Calcular métricas reales desde los datos de la API
-  const criticalCases = team.filter(m => m.status === 'BLOQUEADO').length;
-  const alertCases = team.filter(m => m.status === 'ALERTA').length;
-  const avgHours = team.length > 0
-    ? Math.round(team.reduce((sum, m) => sum + (m.horasAcumuladas || 0), 0) / team.length)
-    : 0;
+  const criticalCases = team.filter((m) => m.status === "BLOQUEADO").length;
+  const alertCases = team.filter((m) => m.status === "ALERTA").length;
+  const avgHours =
+    team.length > 0
+      ? Math.round(
+          team.reduce((sum, m) => sum + (m.horasAcumuladas || 0), 0) /
+            team.length,
+        )
+      : 0;
   // Porcentaje de fatiga: (horas promedio / 44) * 100
   const avgFatigue = Math.min(Math.round((avgHours / 44) * 100), 100);
 
   const getFatigueColor = (fatigue: number) => {
-    if (fatigue >= 75) return 'text-red-600';
-    if (fatigue >= 50) return 'text-yellow-600';
-    return 'text-green-600';
+    if (fatigue >= 75) return "text-red-600";
+    if (fatigue >= 50) return "text-yellow-600";
+    return "text-green-600";
   };
 
   const getFatigueBgColor = (fatigue: number) => {
-    if (fatigue >= 75) return 'bg-red-100';
-    if (fatigue >= 50) return 'bg-yellow-100';
-    return 'bg-green-100';
+    if (fatigue >= 75) return "bg-red-100";
+    if (fatigue >= 50) return "bg-yellow-100";
+    return "bg-green-100";
   };
 
   if (loading) {
@@ -98,18 +102,25 @@ const FatigueCard: React.FC = () => {
 
       {/* Detalle por médico */}
       <div className="mt-4 space-y-2">
-        {team.map(member => (
-          <div key={member.id} className="flex items-center justify-between text-sm">
+        {team.map((member) => (
+          <div
+            key={member.id}
+            className="flex items-center justify-between text-sm"
+          >
             <span className="font-medium">{member.name}</span>
             <div className="flex items-center gap-3">
-              <span className="text-slate-500">{member.horasAcumuladas}h / 44h</span>
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                member.status === 'BLOQUEADO'
-                  ? 'bg-red-100 text-red-600'
-                  : member.status === 'ALERTA'
-                  ? 'bg-yellow-100 text-yellow-600'
-                  : 'bg-green-100 text-green-600'
-              }`}>
+              <span className="text-slate-500">
+                {member.horasAcumuladas}h / 44h
+              </span>
+              <span
+                className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  member.status === "BLOQUEADO"
+                    ? "bg-red-100 text-red-600"
+                    : member.status === "ALERTA"
+                      ? "bg-yellow-100 text-yellow-600"
+                      : "bg-green-100 text-green-600"
+                }`}
+              >
                 {member.status}
               </span>
             </div>
