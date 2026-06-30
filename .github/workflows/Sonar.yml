@@ -44,13 +44,31 @@ jobs:
             exit 1
           fi
 
-      # Equivalente a: SonarSource/sonarqube-scan-action
-      # Lee sonar-project.properties del raíz del repo
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+      # Instalación manual del SonarScanner CLI, en vez de dejar que la acción
+      # SonarSource/sonarqube-scan-action lo descargue automáticamente.
+      # La acción estaba fallando con error 404 al intentar descargar el
+      # scanner internamente, así que lo descargamos directo de una versión
+      # estable conocida.
+      - name: Install SonarScanner CLI and run scan
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        run: |
+          set -euo pipefail
+
+          SCANNER_VERSION="4.10.0.19059"
+
+          wget -q "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SCANNER_VERSION}-linux.zip"
+          unzip -q "sonar-scanner-cli-${SCANNER_VERSION}-linux.zip"
+          export PATH="$PWD/sonar-scanner-${SCANNER_VERSION}-linux/bin:$PATH"
+
+          sonar-scanner --version
+
+          # Lee sonar-project.properties del raíz del repo automáticamente
+          sonar-scanner \
+            -Dsonar.host.url="${SONAR_HOST_URL}" \
+            -Dsonar.login="${SONAR_TOKEN}" \
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
 
       # Falla el pipeline si no se alcanza el Quality Gate configurado en SonarQube
       - name: SonarQube Quality Gate Check
