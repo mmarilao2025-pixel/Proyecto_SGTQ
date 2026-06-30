@@ -1,4 +1,4 @@
-name: CI - Lint, Test & SonarQube
+name: CI - Build, Test & SonarQube
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - main
       - Dev
       - feature/ci-sonarqube
+
   pull_request:
     branches:
       - main
@@ -13,49 +14,57 @@ on:
 
 jobs:
   build:
+    name: Build, Test and Analyze
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout código
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          # fetch-depth 0 es obligatorio para que SonarQube analice el historial
           fetch-depth: 0
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Instalar dependencias
+      - name: Install dependencies
         run: npm install
 
-      # ── LINT ─────────────────────────────────────────────────────────────────
-      - name: Lint (ESLint)
-        run: npm run lint
-
-      # ── TYPE CHECK ───────────────────────────────────────────────────────────
-      - name: TypeScript Check
+      - name: TypeScript Type Check
         run: npm run type-check
 
-      # ── TESTS + COVERAGE ─────────────────────────────────────────────────────
-      # Los TransactionTests requieren BD real → se excluyen en CI con la
-      # variable de entorno CI=true (que GitHub Actions define automáticamente)
-      - name: Tests con cobertura (Jest)
+      - name: ESLint
+        run: npm run lint
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Run Tests with Coverage
         run: npm run test:coverage
         env:
           CI: true
 
-      # ── BUILD ─────────────────────────────────────────────────────────────────
-      - name: Build (Vite)
-        run: npm run build
+      - name: Verify Coverage
+        run: |
+          if [ ! -f coverage/lcov.info ]; then
+            echo "❌ coverage/lcov.info no fue generado"
+            exit 1
+          fi
 
-      # ── SONARQUBE ─────────────────────────────────────────────────────────────
-      # El archivo coverage/lcov.info generado por Jest es leído por SonarQube
-      # gracias a sonar.javascript.lcov.reportPaths en sonar-project.properties
+          echo "✅ Coverage generado correctamente"
+
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          
+      - name: Pipeline Summary
+        if: always()
+        run: |
+          echo "===================================="
+          echo "Pipeline finalizado"
+          echo "Proyecto: syntaxerror"
+          echo "===================================="
