@@ -1,68 +1,76 @@
-name: Checks & Tests
+name: CI - Build, Test & SonarQube
 
 on:
   push:
-    branches: [main, Dev]
+    branches:
+      - main
+      - Dev
+      - feature/ci-sonarqube
+
   pull_request:
-    branches: [main, Dev]
+    branches:
+      - main
+      - Dev
 
 jobs:
-  lint:
-    name: Lint & Format
+  build:
+    name: Build, Test and Analyze
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
           cache: npm
 
       - name: Install dependencies
         run: npm install
 
-      # Equivalente a: uv run ruff check .
-      - name: Run ESLint (lint)
+      - name: TypeScript Type Check
+        run: npm run type-check
+
+      - name: ESLint
         run: npm run lint
 
-      # Equivalente a: uv run ruff format --check .
-      # Prettier valida que el formato sea correcto sin modificar archivos
-      - name: Run Prettier (format check)
-        run: npx prettier --check "backend/**/*.js" "shared/**/*.js" "frontend/src/**/*.{ts,tsx}"
+      - name: Build Project
+        run: npm run build
 
-  type-check:
-    name: Type Checking
-    runs-on: ubuntu-latest
-    needs: lint
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-      - run: npm install
-
-      # Equivalente a: uv run ty check
-      - run: npm run type-check
-
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
-    needs: type-check
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-      - run: npm install
-
-      # Los TransactionTests requieren BD real → se excluyen en CI (CI=true lo
-      # detecta jest.config.cjs via testPathIgnorePatterns)
-      # Equivalente a: uv run pytest
-      - name: Run Jest tests
+      - name: Run Tests with Coverage
         run: npm run test:coverage
         env:
           CI: true
+
+      - name: Verify Coverage
+        run: |
+          if [ ! -f coverage/lcov.info ]; then
+            echo "❌ coverage/lcov.info no fue generado"
+            exit 1
+          fi
+
+          echo "✅ Coverage generado correctamente"
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+      - name: SonarQube Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+      - name: Pipeline Summary
+        if: always()
+        run: |
+          echo "===================================="
+          echo "Pipeline finalizado"
+          echo "Proyecto: syntaxerror"
+          echo "===================================="
