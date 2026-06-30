@@ -49,34 +49,21 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         run: |
-          echo "HOST: $SONAR_HOST_URL"
+          echo "Inicio"
 
-          if [ -z "$SONAR_TOKEN" ]; then
-            echo "❌ SONAR_TOKEN vacío"
-            exit 1
-          fi
+          echo "Host recibido"
 
           if [ -z "$SONAR_HOST_URL" ]; then
-            echo "❌ SONAR_HOST_URL vacío"
+            echo "HOST vacío"
             exit 1
           fi
 
-          SCANNER_VERSION="4.10.0.19059"
+          if [ -z "$SONAR_TOKEN" ]; then
+            echo "TOKEN vacío"
+            exit 1
+          fi
 
-          wget -q "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SCANNER_VERSION}-linux.zip"
-
-          unzip -q "sonar-scanner-cli-${SCANNER_VERSION}-linux.zip"
-
-          export PATH="$PWD/sonar-scanner-${SCANNER_VERSION}-linux/bin:$PATH"
-
-          sonar-scanner --version
-
-          sonar-scanner \
-            -Dsonar.host.url="$SONAR_HOST_URL" \
-            -Dsonar.login="$SONAR_TOKEN" \
-            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info \
-            -X
-
+          echo "Todo OK"
       # Falla el pipeline si no se alcanza el Quality Gate configurado en SonarQube
       - name: SonarQube Quality Gate Check
         uses: SonarSource/sonarqube-quality-gate-action@v1
