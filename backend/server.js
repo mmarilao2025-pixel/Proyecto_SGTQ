@@ -288,11 +288,9 @@ app.get("/api/patients/:rut", async (req, res) => {
     }
   } catch (error) {
     console.error("Error al consultar paciente en la base de datos:", error);
-    return res
-      .status(500)
-      .json({
-        error: "Error interno del servidor al consultar la ficha clínica.",
-      });
+    return res.status(500).json({
+      error: "Error interno del servidor al consultar la ficha clínica.",
+    });
   }
 });
 
