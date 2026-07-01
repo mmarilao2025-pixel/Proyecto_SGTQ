@@ -1,0 +1,70 @@
+name: CI - Build, Test & SonarQube
+
+on:
+  push:
+    branches:
+      - main
+      - Dev
+      - feature/ci-sonarqube
+
+  pull_request:
+    branches:
+      - main
+      - Dev
+
+jobs:
+  build:
+    name: Build, Test and Analyze
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: TypeScript Type Check
+        run: npm run type-check
+
+      - name: ESLint
+        run: npm run lint
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Run Tests with Coverage
+        run: npm run test:coverage
+        env:
+          CI: true
+
+      - name: Verify Coverage
+        run: |
+          if [ ! -f coverage/lcov.info ]; then
+            echo "❌ coverage/lcov.info no fue generado"
+            exit 1
+          fi
+
+          echo "✅ Coverage generado correctamente"
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v6
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          
+      - name: Pipeline Summary
+        if: always()
+        run: |
+          echo "===================================="
+          echo "Pipeline finalizado"
+          echo "Proyecto: syntaxerror"
+          echo "===================================="

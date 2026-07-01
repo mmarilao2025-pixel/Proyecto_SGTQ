@@ -5,7 +5,7 @@ export interface Surgery {
   startTime: string;
   endTime: string;
   pabellon: number;
-  status: 'PROGRAMADA' | 'EN PROGRESO' | 'COMPLETADA' | 'CANCELADA';
+  status: "PROGRAMADA" | "EN PROGRESO" | "COMPLETADA" | "CANCELADA";
   requiereUCI: boolean;
 }
 
@@ -13,7 +13,7 @@ export interface TeamMember {
   id: number;
   name: string;
   specialty: string;
-  status: 'DISPONIBLE' | 'ALERTA' | 'BLOQUEADO';
+  status: "DISPONIBLE" | "ALERTA" | "BLOQUEADO";
   horasAcumuladas: number;
   disponible: boolean;
   initials: string;
@@ -48,7 +48,13 @@ export interface ValidacionCirugia {
   mensaje: string;
   id?: string;
   error?: string;
-  detalles?: Array<{ regla: string; pasa: boolean; descripcion: string; prioridad: number; severidad: string }>;
+  detalles?: Array<{
+    regla: string;
+    pasa: boolean;
+    descripcion: string;
+    prioridad: number;
+    severidad: string;
+  }>;
 }
 
 export interface EventStats {
@@ -67,6 +73,6 @@ export interface EntradaFatiga {
   id: string;
   nombreTrabajador: string;
   puntajeFatiga: number;
-  estado: 'normal' | 'alerta' | 'critico';
+  estado: "normal" | "alerta" | "critico";
   fechaHora: string;
 }
