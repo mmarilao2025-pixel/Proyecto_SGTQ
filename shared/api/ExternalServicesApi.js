@@ -14,7 +14,7 @@ class LaboratorioExternoAPI {
     return new Promise((resolve) => {
       setTimeout(() => {
         const numeroLimpio =
-          parseInt(String(pacienteId).replace(/[^0-9]/g, "")) || 1;
+          Number.parseInt(String(pacienteId).replace(/[^0-9]/g, "")) || 1;
         const indice = numeroLimpio % laboratorioResultados.length;
         resolve(laboratorioResultados[indice]);
       }, 300);

@@ -17,7 +17,7 @@ async function initializeDatabase() {
     const migrationsDir = path.join(__dirname, "migrations");
     const archivosMigracion = fs.readdirSync(migrationsDir)
       .filter((archivo) => archivo.endsWith(".sql"))
-      .sort(); // orden alfabético => orden numérico (001, 002, 003...)
+      .sort((a, b) => a.localeCompare(b)); // orden alfabético explícito y confiable
 
     for (const archivo of archivosMigracion) {
       const migrationPath = path.join(migrationsDir, archivo);

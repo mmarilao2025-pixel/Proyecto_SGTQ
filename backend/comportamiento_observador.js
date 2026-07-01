@@ -305,9 +305,9 @@ class GestorEventosSingleton {
   }
 }
 
-// Funciones de utilidad para integración
 function notificarEvento(tipoEvento, datos) {
   const gestor = GestorEventosSingleton.obtenerInstancia();
+  if (!gestor) return;
   gestor.notificar(tipoEvento, datos);
 }
 

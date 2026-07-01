@@ -229,9 +229,8 @@ const ScheduleForm: React.FC = () => {
               </div>
             ) : (
               <p className="text-sm text-red-700">
-                <i className="fa-solid fa-triangle-exclamation mr-2"></i>
+                <i className="fa-solid fa-triangle-exclamation mr-2"></i>{' '}
                 No hay profesionales con disponibilidad o margen de fatiga legal
-                para esta especialidad.
               </p>
             )}
           </div>
@@ -258,7 +257,7 @@ const ScheduleForm: React.FC = () => {
           >
             {loading ? (
               <>
-                <i className="fa-solid fa-spinner animate-spin mr-2"></i>
+                <i className="fa-solid fa-spinner animate-spin mr-2"></i>{' '}
                 Procesando en Motor SOLID...
               </>
             ) : (

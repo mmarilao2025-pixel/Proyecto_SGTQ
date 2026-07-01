@@ -32,7 +32,7 @@ const validarRUT = (rutCompleto: string): boolean => {
   if (rutLimpio.length < 8) return false;
 
   const dvIngresado = rutLimpio.slice(-1);
-  let rutNumeros = parseInt(rutLimpio.slice(0, -1), 10);
+  let rutNumeros = Number.parseInt(rutLimpio.slice(0, -1), 10);
   
   let m = 0, s = 1;
   for (; rutNumeros; rutNumeros = Math.floor(rutNumeros / 10)) {
