@@ -18,33 +18,36 @@ const {
   obtenerEstadisticasEventos,
   GestorEventosSingleton,
 } = require("./comportamiento_observador");
+const { obtenerInsumos } = require("./insumoService");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const distPath = path.join(__dirname, 'dist');
 const distPath = path.join(__dirname, "dist");
+
 // Configuración de Servidor HTTP y WebSockets
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*" },
 });
-const { obtenerInsumos } = require('./insumoService');
 
-// GET /api/insumos — Lista todos los insumos con su stock actual
-app.get('/api/insumos', async (req, res) => {
-    try {
-        const insumos = await obtenerInsumos();
-        res.json(insumos);
-    } catch (error) {
-        res.status(500).json({ error: 'Error al obtener insumos' });
-    }
-});
 // Middlewares
 app.use(cors());
 app.use(express.json());
 app.use(express.static(distPath)); // Servir frontend compilado desde dist
 
 // ============ RUTAS API ============
+
+/**
+ * GET /api/insumos — Lista todos los insumos con su stock actual
+ */
+app.get("/api/insumos", async (req, res) => {
+  try {
+    const insumos = await obtenerInsumos();
+    res.json(insumos);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener insumos" });
+  }
+});
 
 /**
  * GET /api/dashboard
@@ -182,26 +185,6 @@ app.get("/api/events/stats", (req, res) => {
 /**
  * POST /api/surgery/atomic
  */
-
-app.post('/api/surgery/atomic', async (req, res) => {
-    try {
-        const { rutPaciente, pabellonId, camaId, tipoCirugia, fechaInicio, fechaFin,
-                requiereTransfusion, tipoSangre, litrosSangre } = req.body;
-
-        if (!rutPaciente || !pabellonId || !camaId || !tipoCirugia) {
-            return res.status(400).json({ error: 'Datos incompletos' });
-        }
-
-        const resultado = await agendarCirugiaAtomica(
-            rutPaciente, pabellonId, camaId, tipoCirugia, fechaInicio, fechaFin,
-            requiereTransfusion, tipoSangre, litrosSangre
-        );
-
-        if (resultado.exito) res.json(resultado);
-        else res.status(400).json(resultado);
-
-    } catch (error) {
-        res.status(500).json({ error: 'Error en transacción de cirugía' });
 app.post("/api/surgery/atomic", async (req, res) => {
   try {
     const {
@@ -211,10 +194,15 @@ app.post("/api/surgery/atomic", async (req, res) => {
       tipoCirugia,
       fechaInicio,
       fechaFin,
+      requiereTransfusion,
+      tipoSangre,
+      litrosSangre,
     } = req.body;
+
     if (!rutPaciente || !pabellonId || !camaId || !tipoCirugia) {
       return res.status(400).json({ error: "Datos incompletos" });
     }
+
     const resultado = await agendarCirugiaAtomica(
       rutPaciente,
       pabellonId,
@@ -222,13 +210,18 @@ app.post("/api/surgery/atomic", async (req, res) => {
       tipoCirugia,
       fechaInicio,
       fechaFin,
+      requiereTransfusion,
+      tipoSangre,
+      litrosSangre,
     );
+
     if (resultado.exito) res.json(resultado);
     else res.status(400).json(resultado);
   } catch (error) {
     res.status(500).json({ error: "Error en transacción de cirugía" });
   }
 });
+
 /**
  * GET /api/resources
  */
@@ -338,8 +331,6 @@ app.post("/api/patients", async (req, res) => {
       });
     }
 
-    const db = require("../shared/config/Database");
-
     const insertQuery = `
             INSERT INTO Pacientes (rut, nombre, fecha_nacimiento, telefono, email) 
             VALUES ($1, $2, $3, $4, $5) 
@@ -406,84 +397,6 @@ app.get("/api/surgeries", (req, res) => {
 
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
-});
-
-// ============ RUTAS DE PACIENTES ============
-
-/**
- * GET /api/patients/:rut
- * Busca un paciente por su RUT
- */
-app.get("/api/patients/:rut", async (req, res) => {
-  try {
-    const { rut } = req.params;
-    const db = require("../shared/config/Database");
-
-    // Buscamos al paciente en la base de datos
-    const query = "SELECT * FROM Pacientes WHERE rut = $1";
-    const resultado = await db.query(query, [rut]);
-
-    if (resultado.rows.length === 0) {
-      // Retornamos 404 para que el frontend sepa que debe abrir el formulario de registro
-      return res.status(404).json({ error: "Paciente no encontrado" });
-    }
-
-    // Si lo encuentra, devuelve los datos
-    res.json(resultado.rows[0]);
-  } catch (error) {
-    console.error("Error en GET /api/patients/:rut:", error.message);
-    res.status(500).json({ error: "Error al consultar la base de datos" });
-  }
-});
-
-/**
- * POST /api/patients
- * Registra un nuevo paciente
- */
-app.post("/api/patients", async (req, res) => {
-  try {
-    const { rut, nombre, fechaNacimiento, telefono, email } = req.body;
-
-    // Validar campos obligatorios de la tabla
-    if (!rut || !nombre || !fechaNacimiento) {
-      return res.status(400).json({
-        error: "Faltan campos obligatorios: rut, nombre o fecha de nacimiento",
-      });
-    }
-
-    const db = require("../shared/config/Database");
-
-    const insertQuery = `
-            INSERT INTO Pacientes (rut, nombre, fecha_nacimiento, telefono, email) 
-            VALUES ($1, $2, $3, $4, $5) 
-            RETURNING *;
-        `;
-
-    const valores = [
-      rut,
-      nombre,
-      fechaNacimiento,
-      telefono || null,
-      email || null,
-    ];
-    const resultado = await db.query(insertQuery, valores);
-
-    // Retornamos 201 (Created) con los datos del paciente
-    res.status(201).json({
-      exito: true,
-      mensaje: "Paciente registrado exitosamente",
-      paciente: resultado.rows[0],
-    });
-  } catch (error) {
-    console.error("Error en POST /api/patients:", error.message);
-    if (error.code === "23505") {
-      // Código de error de PostgreSQL para "Unique violation"
-      return res
-        .status(409)
-        .json({ error: "El RUT ingresado ya está registrado" });
-    }
-    res.status(500).json({ error: "Error interno al registrar el paciente" });
-  }
 });
 
 // ============ RUTAS ESTÁTICAS ============
