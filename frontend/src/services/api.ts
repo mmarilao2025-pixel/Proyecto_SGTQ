@@ -61,6 +61,14 @@ class ApiService {
           requiereUci: requiereUci ?? false
         };
 
+  async scheduleSurgery(payload: {
+    rut: string;
+    nombre: string;
+    alergias: string;
+    medicoId: number;
+    tipoCirugia: string;
+    requiereUci: boolean;
+  }): Promise<ValidacionCirugia> {
     const response = await fetch(`${API_BASE_URL}/surgery/schedule`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
