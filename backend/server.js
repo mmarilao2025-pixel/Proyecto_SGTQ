@@ -64,7 +64,7 @@ app.get("/api/dashboard", (req, res) => {
       surgeries: [
         {
           id: 1,
-          patient: "Paciente A",
+          namePatient: "Paciente A",
           type: "Cirugía General",
           startTime: "08:00",
           endTime: "10:30",
@@ -443,11 +443,5 @@ io.on("connection", (socket) => {
 });
 
 httpServer.listen(PORT, () => {
-  console.log(`
-    ╔════════════════════════════════════════════╗
-    ║   SGTQ - Sistema de Gestión Quirúrgica     ║
-    ║   Servidor HTTP y WSS en puerto ${PORT}       ║
-    ║   http://localhost:${PORT}                    ║
-    ╚════════════════════════════════════════════╝
-    `);
+  console.log(`SGTQ - Servidor corriendo en puerto ${PORT}`);
 });
