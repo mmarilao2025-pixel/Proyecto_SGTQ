@@ -10,6 +10,15 @@ class ApiService {
     return response.json();
   }
 
+  async resetFatigue(medicoId: number): Promise<{success: boolean, error?: string, mensaje?: string}> {
+    const response = await fetch(`${API_BASE_URL}/team/reset-fatigue`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ medicoId })
+    });
+    return response.json();
+  }
+
   async getResources(): Promise<Resources> {
     const response = await fetch(`${API_BASE_URL}/resources`);
     if (!response.ok) throw new Error("Error al obtener recursos");

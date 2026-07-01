@@ -1,14 +1,12 @@
-const {
-  GestorEventosQuirurgicos,
-  ObservadorNotificaciones,
-} = require("./comportamiento_observador");
-const express = require("express");
-const cors = require("cors");
-require("dotenv").config({ path: "../shared/config/env/.env" });
-const db = require("../shared/config/Database");
-const path = require("path");
-const { createServer } = require("http");
-const { Server } = require("socket.io");
+const { FatigueTransactionService } = require('../shared/api/database/services/FatigueTransactionService');
+const { GestorEventosQuirurgicos, ObservadorNotificaciones } = require('./comportamiento_observador');
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config({ path: '../shared/config/env/.env' });
+const db = require('../shared/config/Database');
+const path = require('path');
+const { createServer } = require('http'); 
+const { Server } = require('socket.io');  
 
 // Importar servicios
 const { agendarCirugiaAtomica } = require("./cirugiaService");
@@ -395,6 +393,72 @@ app.get("/api/surgeries", (req, res) => {
   }
 });
 
+/**
+ * POST /api/team/reset-fatigue
+ * Desbloquea a un médico tras su periodo de descanso
+ */
+app.post('/api/team/reset-fatigue', async (req, res) => {
+    try {
+        const { medicoId } = req.body;
+        
+        if (!medicoId) {
+            return res.status(400).json({ error: 'Falta el ID del médico' });
+        }
+
+        const fatigueService = new FatigueTransactionService();
+        const result = await fatigueService.resetFatigue(medicoId);
+
+        if (result.success) {
+            res.json(result);
+        } else {
+            res.status(400).json(result);
+        }
+    } catch (error) {
+        console.error('Error en /api/team/reset-fatigue:', error);
+        res.status(500).json({ error: 'Error al reiniciar la fatiga del médico' });
+    }
+});
+
+/**
+ * POST /api/patients
+ * Registra un nuevo paciente
+ */
+app.post('/api/patients', async (req, res) => {
+    try {
+        const { rut, nombre, fechaNacimiento, telefono, email } = req.body;
+
+        // Validar campos obligatorios de la tabla
+        if (!rut || !nombre || !fechaNacimiento) {
+            return res.status(400).json({ 
+                error: 'Faltan campos obligatorios: rut, nombre o fecha de nacimiento' 
+            });
+        }
+
+        const db = require('../shared/config/Database');
+        
+        const insertQuery = `
+            INSERT INTO Pacientes (rut, nombre, fecha_nacimiento, telefono, email) 
+            VALUES ($1, $2, $3, $4, $5) 
+            RETURNING *;
+        `;
+        
+        const valores = [rut, nombre, fechaNacimiento, telefono || null, email || null];
+        const resultado = await db.query(insertQuery, valores);
+
+        // Retornamos 201 (Created) con los datos del paciente
+        res.status(201).json({
+            exito: true,
+            mensaje: 'Paciente registrado exitosamente',
+            paciente: resultado.rows[0]
+        });
+
+    } catch (error) {
+        console.error('Error en POST /api/patients:', error.message);
+        if (error.code === '23505') { // Código de error de PostgreSQL para "Unique violation"
+            return res.status(409).json({ error: 'El RUT ingresado ya está registrado' });
+        }
+        res.status(500).json({ error: 'Error interno al registrar el paciente' });
+    }
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
@@ -427,7 +491,7 @@ const broadcaster = new SocketBroadcaster();
 gestorEventos.suscribir("cirugia_aprobada", broadcaster);
 gestorEventos.suscribir("cirugia_rechazada", broadcaster);
 gestorEventos.suscribir("emergencia_medica", broadcaster);
-
+});
 io.on("connection", (socket) => {
   console.log("🔌 Nuevo cliente de dashboard conectado:", socket.id);
 });
