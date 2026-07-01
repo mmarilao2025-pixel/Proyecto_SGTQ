@@ -1,22 +1,12 @@
-import React, { useState } from 'react';
-import Sidebar from './pages/components/Sidebar';
-import PatientRegistry, { Paciente } from './pages/components/PatientRegistry';
-import SurgeryScheduler from './pages/components/SurgeryScheduler';
-import SurgeryList from './pages/components/SurgeryList';
-import FatigueCard from './pages/components/FatigueCard';
-import InsumosView from './pages/components/InsumosView';
-import EventStatsCard from './pages/components/EventStatsCard';
 import React, { useState } from "react";
 import Sidebar from "./pages/components/Sidebar";
 import PatientRegistry, { Paciente } from "./pages/components/PatientRegistry";
 import SurgeryScheduler from "./pages/components/SurgeryScheduler";
 import SurgeryList from "./pages/components/SurgeryList";
 import FatigueCard from "./pages/components/FatigueCard";
-import EventStatsCard from "./pages/components/EventStatsCard";
+import InsumosView from "./pages/components/InsumosView";
 
 const App: React.FC = () => {
-  const [activeView, setActiveView] = useState('cronograma');
-  const [pacienteSeleccionado, setPacienteSeleccionado] = useState<Paciente | null>(null);
   const [activeView, setActiveView] = useState("cronograma");
 
   // Estado global para compartir el paciente seleccionado/creado hacia el agendamiento
@@ -34,9 +24,7 @@ const App: React.FC = () => {
           switch (activeView) {
             case "cronograma":
               return <SurgeryList />;
-            case 'equipo':
-              return <FatigueCard />;
-            case 'pacientes':
+
             case "equipo":
               return <FatigueCard />;
 
@@ -46,14 +34,6 @@ const App: React.FC = () => {
                 <PatientRegistry
                   onPacienteValidado={(paciente) => {
                     setPacienteSeleccionado(paciente);
-                    setActiveView('agendamiento');
-                  }}
-                />
-              );
-            case 'agendamiento':
-              return (
-                <SurgeryScheduler
-                  paciente={pacienteSeleccionado ?? { rut: '', nombre: '' }}
                     setActiveView("agendamiento"); // Redirección automática al flujo de pabellón
                   }}
                 />
@@ -77,20 +57,13 @@ const App: React.FC = () => {
                   onSuccess={() => {
                     alert("¡Cirugía agendada con éxito!");
                     setPacienteSeleccionado(null);
-
-                    setActiveView('cronograma');
-                  }}
-                />
-              );
-            case 'insumos':
-              return <InsumosView />;
                     setActiveView("cronograma"); // Volver a la vista principal
                   }}
                 />
               );
 
-            case "auditoria":
-              return <EventStatsCard />;
+            case "insumos":
+              return <InsumosView />;
 
             default:
               return <SurgeryList />;
@@ -100,5 +73,4 @@ const App: React.FC = () => {
     </div>
   );
 };
-
 export default App;

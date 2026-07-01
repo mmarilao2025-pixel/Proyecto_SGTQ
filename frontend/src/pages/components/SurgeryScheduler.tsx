@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
-import { Paciente } from '../../types';
 import React, { useState } from "react";
 import { Paciente } from "./PatientRegistry";
+
 interface SurgerySchedulerProps {
   paciente: Paciente; // El paciente validado en el Paso 1
   onSuccess: () => void;

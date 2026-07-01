@@ -80,28 +80,19 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
           ></i>
           <span>Agendamiento</span>
         </button>
-        <button 
-          onClick={() => setActiveView('insumos')} 
-          className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all duration-200 ${
-            activeView === 'insumos' 
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' 
-              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-          }`}
-        >
-          <i className={`fa-solid fa-box-open w-5 text-center text-lg ${activeView === 'insumos' ? 'text-blue-200' : 'text-slate-500'}`}></i> 
-          <span>Insumos</span>
+
         <button
-          onClick={() => setActiveView("auditoria")}
+          onClick={() => setActiveView("insumos")}
           className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all duration-200 ${
-            activeView === "auditoria"
+            activeView === "insumos"
               ? "bg-blue-600 text-white shadow-lg shadow-blue-900/30"
               : "text-slate-400 hover:bg-slate-800 hover:text-white"
           }`}
         >
           <i
-            className={`fa-solid fa-shield-halved w-5 text-center text-lg ${activeView === "auditoria" ? "text-blue-200" : "text-slate-500"}`}
+            className={`fa-solid fa-box-open w-5 text-center text-lg ${activeView === "insumos" ? "text-blue-200" : "text-slate-500"}`}
           ></i>
-          <span>Auditoría y Recursos</span>
+          <span>Insumos</span>
         </button>
       </nav>
 

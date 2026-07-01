@@ -1,6 +1,3 @@
-import React, { useState } from 'react';
-import { Paciente } from '../../types';
-export type { Paciente }; // re-exporta para que app.tsx siga funcionando
 import React, { useState } from "react";
 
 export interface Paciente {
