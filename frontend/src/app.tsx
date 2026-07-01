@@ -29,35 +29,37 @@ const App: React.FC = () => {
               return <FatigueCard />;
 
             case "pacientes":
-              // La pestaña de Ficha Clínica muestra el buscador y formulario de registro
               return (
                 <PatientRegistry
                   onPacienteValidado={(paciente) => {
                     setPacienteSeleccionado(paciente);
-                    setActiveView("agendamiento"); // Redirección automática al flujo de pabellón
+                    setActiveView("agendamiento");
                   }}
                 />
               );
 
             case "agendamiento":
-              // La pestaña de Agendamiento maneja los pabellones y horarios
               return (
                 <SurgeryScheduler
                   paciente={
                     pacienteSeleccionado || {
                       rut: "",
                       nombre: "",
-                      sexo: "",
-                      prevision: "",
-                      tipoSangre: "",
-                      alergias: "",
-                      enfermedadesCronicas: "",
+                      fechaNacimiento: "",
+                      sexo: "Masculino",
+                      previsionSalud: "Fonasa",
+                      planIsapre: "",
+                      tipoSangre: "Desconocido / No informado",
+                      alergias: [],
+                      enfermedadesCronicas: [],
+                      cirugiasPrevias: "",
+                      estadoPaciente: "Activo"
                     }
                   }
                   onSuccess={() => {
                     alert("¡Cirugía agendada con éxito!");
                     setPacienteSeleccionado(null);
-                    setActiveView("cronograma"); // Volver a la vista principal
+                    setActiveView("cronograma");
                   }}
                 />
               );
