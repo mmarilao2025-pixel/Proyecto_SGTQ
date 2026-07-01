@@ -42,7 +42,7 @@ class GestorCirugiasFacade {
       const contexto = await this._construirContexto(payload);
 
       // FASE 2: Ejecutar motor de reglas SOLID con el contexto construido
-      const resultado = this.motor.procesar(contexto);
+      const resultado = await this.motor.procesar(contexto);
 
       // FASE 3: Construir respuesta final
       if (resultado.aprobado) {

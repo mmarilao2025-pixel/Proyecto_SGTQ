@@ -3,12 +3,12 @@ module.exports = {
   testEnvironment: "node",
 
   testMatch: [
-    "<rootDir>/backend/tests/**/*.test.js",
-    "<rootDir>/backend/tests/**/*.test.ts",
-    "<rootDir>/backend/tests/**/*Test.js",
-    "<rootDir>/backend/tests/**/*Tests.js",
-    "<rootDir>/backend/tests/**/*Test.ts",
-    "<rootDir>/backend/tests/**/*Tests.ts"
+    "<rootDir>/backend/**/*.test.js",
+    "<rootDir>/backend/**/*.test.ts",
+    "<rootDir>/backend/**/*Test.js",
+    "<rootDir>/backend/**/*Tests.js",
+    "<rootDir>/backend/**/*Test.ts",
+    "<rootDir>/backend/**/*Tests.ts"
   ],
 
   moduleFileExtensions: ["js", "ts", "json"],
@@ -30,7 +30,13 @@ module.exports = {
     "shared/**/*.js",
     "!backend/tests/**",
     "!backend/server.js",
-    "!backend/comportamiento_observador.demo.js"
+    "!backend/comportamiento_observador.demo.js",
+    "!backend/**/*.test.js",
+    "!backend/**/*.test.ts",
+    "!backend/**/*Test.js",
+    "!backend/**/*Tests.js",
+    "!backend/**/*Test.ts",
+    "!backend/**/*Tests.ts"
   ],
 
   coverageDirectory: "coverage",
