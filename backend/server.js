@@ -8,7 +8,6 @@ const path = require('path');
 const { createServer } = require('http'); 
 const { Server } = require('socket.io');
 const { setupSwagger } = require('./swagger');  
-const { Server } = require('socket.io');  
 
 // Importar servicios
 const { agendarCirugiaAtomica } = require("./cirugiaService");
