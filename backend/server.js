@@ -6,7 +6,8 @@ require('dotenv').config({ path: '../shared/config/env/.env' });
 const db = require('../shared/config/Database');
 const path = require('path');
 const { createServer } = require('http'); 
-const { Server } = require('socket.io');  
+const { Server } = require('socket.io');
+const { setupSwagger } = require('./swagger');  
 
 // Importar servicios
 const { agendarCirugiaAtomica } = require("./cirugiaService");
@@ -32,6 +33,9 @@ const io = new Server(httpServer, {
 app.use(cors());
 app.use(express.json());
 app.use(express.static(distPath)); // Servir frontend compilado desde dist
+
+// Inicialización de Swagger en la capa de infraestructura
+setupSwagger(app);
 
 // ============ RUTAS API ============
 

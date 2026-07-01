@@ -37,14 +37,30 @@ class ApiService {
     return response.json();
   }
 
-  async scheduleSurgery(payload: {
-    rut: string;
-    nombre: string;
-    alergias: string;
-    medicoId: number;
-    tipoCirugia: string;
-    requiereUci: boolean;
-  }): Promise<ValidacionCirugia> {
+  async scheduleSurgery(
+    payloadOrRut: {
+      rut: string;
+      nombre: string;
+      alergias: string;
+      medicoId: number;
+      tipoCirugia: string;
+      requiereUci: boolean;
+    } | string | number,
+    medicoId?: number,
+    tipoCirugia?: string,
+    requiereUci?: boolean
+  ): Promise<ValidacionCirugia> {
+    const payload = typeof payloadOrRut === 'object' && payloadOrRut !== null && !Array.isArray(payloadOrRut)
+      ? payloadOrRut
+      : {
+          rut: String(payloadOrRut ?? ''),
+          nombre: 'Paciente',
+          alergias: '',
+          medicoId: medicoId ?? 0,
+          tipoCirugia: tipoCirugia ?? '',
+          requiereUci: requiereUci ?? false
+        };
+
     const response = await fetch(`${API_BASE_URL}/surgery/schedule`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
