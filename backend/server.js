@@ -491,7 +491,7 @@ const broadcaster = new SocketBroadcaster();
 gestorEventos.suscribir("cirugia_aprobada", broadcaster);
 gestorEventos.suscribir("cirugia_rechazada", broadcaster);
 gestorEventos.suscribir("emergencia_medica", broadcaster);
-
+});
 io.on("connection", (socket) => {
   console.log("🔌 Nuevo cliente de dashboard conectado:", socket.id);
 });
