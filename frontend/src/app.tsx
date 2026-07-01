@@ -8,21 +8,22 @@ import EventStatsCard from './pages/components/EventStatsCard';
 import FatigueResetCard from './pages/components/FatigueResetCard';
 
 const App: React.FC = () => {
-  const [activeView, setActiveView] = useState('cronograma');
-  
+  const [activeView, setActiveView] = useState("cronograma");
+
   // Estado global para compartir el paciente seleccionado/creado hacia el agendamiento
-  const [pacienteSeleccionado, setPacienteSeleccionado] = useState<Paciente | null>(null);
+  const [pacienteSeleccionado, setPacienteSeleccionado] =
+    useState<Paciente | null>(null);
 
   return (
     <div className="flex h-screen w-screen bg-slate-50 font-sans overflow-hidden">
-      {/* 1. Barra Lateral Pasando el estado de navegación */}
+      {/* 1. Sidebar izquierdo — navegación */}
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
-      {/* 2. Contenido Principal Dinámico */}
+      {/* 2. Contenido principal */}
       <div className="flex-1 overflow-y-auto p-8">
         {(() => {
           switch (activeView) {
-            case 'cronograma':
+            case "cronograma":
               return <SurgeryList />;
               
             case 'equipo':
@@ -37,11 +38,11 @@ const App: React.FC = () => {
             case 'pacientes':
               // La pestaña de Ficha Clínica muestra el buscador y formulario de registro
               return (
-                <PatientRegistry 
+                <PatientRegistry
                   onPacienteValidado={(paciente) => {
                     setPacienteSeleccionado(paciente);
-                    setActiveView('agendamiento'); // Redirección automática al flujo de pabellón
-                  }} 
+                    setActiveView("agendamiento");
+                  }}
                 />
               );
               
@@ -66,16 +67,16 @@ const App: React.FC = () => {
                 <SurgeryScheduler 
                   paciente={pacienteSeleccionado} 
                   onSuccess={() => {
-                    alert('¡Cirugía agendada con éxito!');
+                    alert("¡Cirugía agendada con éxito!");
                     setPacienteSeleccionado(null);
-                    setActiveView('cronograma'); // Volver a la vista principal
+                    setActiveView("cronograma");
                   }}
                 />
               );
-              
-            case 'auditoria':
-              return <EventStatsCard />;
-              
+
+            case "insumos":
+              return <InsumosView />;
+
             default:
               return <SurgeryList />;
           }
@@ -84,5 +85,4 @@ const App: React.FC = () => {
     </div>
   );
 };
-
 export default App;

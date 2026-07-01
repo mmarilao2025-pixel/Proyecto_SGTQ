@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { TeamMember } from '../../types';
+import React, { useState, useEffect } from "react";
+import { TeamMember } from "../../types";
 
 const FatigueCard: React.FC = () => {
   const [team, setTeam] = useState<TeamMember[]>([]);
@@ -14,13 +14,13 @@ const FatigueCard: React.FC = () => {
 
   const fetchTeam = async () => {
     try {
-      const response = await fetch('/api/team');
-      if (!response.ok) throw new Error('Error al obtener equipo médico');
+      const response = await fetch("/api/team");
+      if (!response.ok) throw new Error("Error al obtener equipo médico");
       const data: TeamMember[] = await response.json();
       setTeam(data);
       setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error desconocido');
+      setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setLoading(false);
     }

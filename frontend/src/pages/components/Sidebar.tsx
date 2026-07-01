@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 interface SidebarProps {
   activeView: string;
@@ -6,7 +6,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
-
   return (
     <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col h-screen shrink-0 shadow-2xl z-10">
       {/* Logo / Cabecera */}
@@ -14,72 +13,86 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
         <div className="flex items-center gap-3 text-white">
           <i className="fa-solid fa-heart-pulse text-2xl text-blue-500"></i>
           <div>
-            <h1 className="text-xl font-bold leading-none tracking-wide">SGTQ</h1>
-            <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Hospital Univ.</span>
+            <h1 className="text-xl font-bold leading-none tracking-wide">
+              SGTQ
+            </h1>
+            <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">
+              Hospital Univ.
+            </span>
           </div>
         </div>
       </div>
 
       {/* Navegación Principal */}
       <nav className="flex-1 px-4 py-6 space-y-2">
-        <button 
-          onClick={() => setActiveView('cronograma')} 
+        <button
+          onClick={() => setActiveView("cronograma")}
           className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all duration-200 ${
-            activeView === 'cronograma' 
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' 
-              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            activeView === "cronograma"
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-900/30"
+              : "text-slate-400 hover:bg-slate-800 hover:text-white"
           }`}
         >
-          <i className={`fa-solid fa-calendar-days w-5 text-center text-lg ${activeView === 'cronograma' ? 'text-blue-200' : 'text-slate-500'}`}></i> 
+          <i
+            className={`fa-solid fa-calendar-days w-5 text-center text-lg ${activeView === "cronograma" ? "text-blue-200" : "text-slate-500"}`}
+          ></i>
           <span>Cronograma</span>
         </button>
 
-        <button 
-          onClick={() => setActiveView('equipo')} 
+        <button
+          onClick={() => setActiveView("equipo")}
           className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all duration-200 ${
-            activeView === 'equipo' 
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' 
-              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            activeView === "equipo"
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-900/30"
+              : "text-slate-400 hover:bg-slate-800 hover:text-white"
           }`}
         >
-          <i className={`fa-solid fa-user-doctor w-5 text-center text-lg ${activeView === 'equipo' ? 'text-blue-200' : 'text-slate-500'}`}></i> 
+          <i
+            className={`fa-solid fa-user-doctor w-5 text-center text-lg ${activeView === "equipo" ? "text-blue-200" : "text-slate-500"}`}
+          ></i>
           <span>Equipo Médico</span>
         </button>
 
-        <button 
-          onClick={() => setActiveView('pacientes')} 
+        <button
+          onClick={() => setActiveView("pacientes")}
           className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all duration-200 ${
-            activeView === 'pacientes' 
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' 
-              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            activeView === "pacientes"
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-900/30"
+              : "text-slate-400 hover:bg-slate-800 hover:text-white"
           }`}
         >
-          <i className={`fa-solid fa-id-card w-5 text-center text-lg ${activeView === 'pacientes' ? 'text-blue-200' : 'text-slate-500'}`}></i> 
+          <i
+            className={`fa-solid fa-id-card w-5 text-center text-lg ${activeView === "pacientes" ? "text-blue-200" : "text-slate-500"}`}
+          ></i>
           <span>Ficha Clínica</span>
         </button>
 
-        <button 
-          onClick={() => setActiveView('agendamiento')} 
+        <button
+          onClick={() => setActiveView("agendamiento")}
           className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all duration-200 ${
-            activeView === 'agendamiento' 
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' 
-              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            activeView === "agendamiento"
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-900/30"
+              : "text-slate-400 hover:bg-slate-800 hover:text-white"
           }`}
         >
-          <i className={`fa-solid fa-book-medical w-5 text-center text-lg ${activeView === 'agendamiento' ? 'text-blue-200' : 'text-slate-500'}`}></i> 
+          <i
+            className={`fa-solid fa-book-medical w-5 text-center text-lg ${activeView === "agendamiento" ? "text-blue-200" : "text-slate-500"}`}
+          ></i>
           <span>Agendamiento</span>
         </button>
 
-        <button 
-          onClick={() => setActiveView('auditoria')} 
+        <button
+          onClick={() => setActiveView("insumos")}
           className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-semibold transition-all duration-200 ${
-            activeView === 'auditoria' 
-              ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30' 
-              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            activeView === "insumos"
+              ? "bg-blue-600 text-white shadow-lg shadow-blue-900/30"
+              : "text-slate-400 hover:bg-slate-800 hover:text-white"
           }`}
         >
-          <i className={`fa-solid fa-shield-halved w-5 text-center text-lg ${activeView === 'auditoria' ? 'text-blue-200' : 'text-slate-500'}`}></i> 
-          <span>Auditoría y Recursos</span>
+          <i
+            className={`fa-solid fa-box-open w-5 text-center text-lg ${activeView === "insumos" ? "text-blue-200" : "text-slate-500"}`}
+          ></i>
+          <span>Insumos</span>
         </button>
       </nav>
 
@@ -92,7 +105,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
           <div className="text-left">
             <p className="text-xs font-bold text-white">Admin Central</p>
             <p className="text-[10px] text-emerald-400 flex items-center gap-1 mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> En línea
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>{" "}
+              En línea
             </p>
           </div>
         </div>
