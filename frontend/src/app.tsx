@@ -6,6 +6,7 @@ import SurgeryList from './pages/components/SurgeryList';
 import FatigueCard from './pages/components/FatigueCard';
 import EventStatsCard from './pages/components/EventStatsCard';
 import FatigueResetCard from './pages/components/FatigueResetCard';
+import InsumosView from './pages/components/InsumosView';
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState("cronograma");
