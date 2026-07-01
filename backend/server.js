@@ -85,7 +85,6 @@ app.get("/api/dashboard", (req, res) => {
  */
 app.post("/api/surgery/schedule", async (req, res) => {
   try {
-    // 1. Extraemos los datos que envía el frontend (¡Aquí capturamos los nuevos!)
     const {
       rutPaciente,
       tipoCirugia,
@@ -101,7 +100,6 @@ app.post("/api/surgery/schedule", async (req, res) => {
         .json({ error: "Faltan datos obligatorios para agendar." });
     }
 
-    // 2. Armamos el Payload para el Motor SOLID
     const payload = {
       rutPaciente: rutPaciente,
       tipoCirugia: tipoCirugia,
@@ -109,17 +107,14 @@ app.post("/api/surgery/schedule", async (req, res) => {
       quirofanoId: quirofanoId,
       fechaHora: fechaHora,
       duracionEstimada: duracionEstimada || 60,
-      medicoHoras: 30, // Simulado para la validación
+      medicoHoras: 30,
     };
 
     const pool = db.getPool();
-
-    // 3. Ejecutamos el Facade (Aquí ocurre la magia de las validaciones de horario)
-    const facade = new GestorCirugiasFacade(); // O new SurgeryBookingFacade() según el que uses
+    const facade = new GestorCirugiasFacade();
     const resultado = await facade.validarYAgendarCirugia(payload, pool);
 
     if (resultado.exito) {
-      // Guardamos en la base de datos real
       const insertQuery = `
                 INSERT INTO Cirugias (paciente_rut, medico_id, pabellon_id, tipo_cirugia, fecha_hora, duracion_estimada_minutos, estado)
                 VALUES ($1, $2, $3, $4, $5, $6, 'Programada')
@@ -135,16 +130,10 @@ app.post("/api/surgery/schedule", async (req, res) => {
       ];
       const nuevaCirugia = await pool.query(insertQuery, valoresInsert);
 
-      // === INSTANCIACIÓN Y USO DEL PATRÓN OBSERVER ===
-      const gestorEventos = new GestorEventosQuirurgicos();
+      const gestorEventosInstance = new GestorEventosQuirurgicos();
       const moduloNotificaciones = new ObservadorNotificaciones();
-
-      // Suscribimos el observador de WhatsApp al gestor de eventos
-      gestorEventos.suscribir(moduloNotificaciones);
-
-      // Notificamos el evento pasándole los datos del payload
-      gestorEventos.notificar("cirugia_aprobada", payload);
-      // ===============================================
+      gestorEventosInstance.suscribir(moduloNotificaciones);
+      gestorEventosInstance.notificar("cirugia_aprobada", payload);
 
       res.status(200).json({
         exito: true,
@@ -252,20 +241,15 @@ app.get("/api/team", (req, res) => {
   }
 });
 
+// ============ RUTAS DE PACIENTES (FICHA CLÍNICA UNIFICADA) ============
+
 /**
  * GET /api/patients/:rut
  * Consulta la ficha clínica completa de un paciente por su RUT
  */
-
-app.get('/api/patients/:rut', async (req, res) => {
-    try {
-        const pool = db.getPool();
-        // Limpiamos el RUT que viene de la URL (quitamos espacios)
-        const rutBusqueda = req.params.rut.trim();
 app.get("/api/patients/:rut", async (req, res) => {
   try {
     const pool = db.getPool();
-    // Limpiamos el RUT que viene de la URL (quitamos puntos y espacios, dejamos guion)
     const rutBusqueda = req.params.rut.trim();
 
     const query = `
@@ -296,11 +280,9 @@ app.get("/api/patients/:rut", async (req, res) => {
     const resultado = await pool.query(query, [rutBusqueda]);
 
     if (resultado.rowCount > 0) {
-      // El paciente existe, devolvemos su ficha clínica con código 200
       console.log(`🔍 Ficha clínica encontrada para el RUT: ${rutBusqueda}`);
       return res.status(200).json(resultado.rows[0]);
     } else {
-      // No existe, devolvemos 404 para que React despliegue el formulario de registro
       console.log(`⚠️ Paciente no registrado con RUT: ${rutBusqueda}`);
       return res.status(404).json({ mensaje: "Paciente no encontrado." });
     }
@@ -314,28 +296,27 @@ app.get("/api/patients/:rut", async (req, res) => {
 
 /**
  * POST /api/patients
- * Registra un nuevo paciente con su ficha clínica completa
+ * Registra un nuevo paciente con todos sus datos clínicos
  */
-      app.post('/api/patients', async (req, res) => {
-    try {
-        const {
-            rut, nombre, fechaNacimiento, telefono, email,
-            direccion, sexo, contactoEmergenciaNombre, contactoEmergenciaTelefono,
-            prevision, isaprePlan, tipoSangre,
-            alergias, enfermedadesCronicas, medicamentosActuales,
-            pesoKg, alturaCm, observacionesMedicas,
-        } = req.body;
+app.post("/api/patients", async (req, res) => {
+  try {
+    const {
+      rut, nombre, fechaNacimiento, telefono, email,
+      direccion, sexo, contactoEmergenciaNombre, contactoEmergenciaTelefono,
+      prevision, isaprePlan, tipoSangre,
+      alergias, enfermedadesCronicas, medicamentosActuales,
+      pesoKg, alturaCm, observacionesMedicas
+    } = req.body;
 
-        // Validar campos obligatorios
-        if (!rut || !nombre || !fechaNacimiento) {
-            return res.status(400).json({
-                error: 'Faltan campos obligatorios: rut, nombre o fecha de nacimiento'
-            });
-        }
+    if (!rut || !nombre || !fechaNacimiento) {
+      return res.status(400).json({
+        error: "Faltan campos obligatorios: rut, nombre o fecha de nacimiento",
+      });
+    }
 
-        const pool = db.getPool();
+    const pool = db.getPool();
 
-        const insertQuery = `
+    const insertQuery = `
             INSERT INTO Pacientes (
                 rut, nombre, fecha_nacimiento, telefono, email,
                 direccion, sexo, contacto_emergencia_nombre, contacto_emergencia_telefono,
@@ -352,79 +333,28 @@ app.get("/api/patients/:rut", async (req, res) => {
             RETURNING *;
         `;
 
-        // Busca la constante 'valores' dentro de app.post('/api/patients', ...) y cámbiala por esta:
-const valores = [
-    rut, 
-    nombre, 
-    fechaNacimiento, 
-    telefono || null, 
-    email || null,
-    direccion || null, 
-    sexo || 'Masculino', 
-    contactoEmergenciaNombre || null, 
-    contactoEmergenciaTelefono || null,
-    previsionSalud || 'Fonasa', 
-    planIsapre || null, 
-    tipoSangre || 'Desconocido / No informado',
-    
-    // Si tu base de datos espera un texto en lugar de un arreglo, los unimos con comas:
-    Array.isArray(alergias) ? alergias.join(', ') : (alergias || ''), 
-    Array.isArray(enfermedadesCronicas) ? enfermedadesCronicas.join(', ') : (enfermedadesCronicas || ''), 
-    
-    medicamentosActuales || null,
-    peso ? parseFloat(peso) : null, 
-    altura ? parseInt(altura, 10) : null, 
-    observacionesMedicas || null, 
-    estadoPaciente || 'Activo'
-];
-
-        const resultado = await pool.query(insertQuery, valores);
-
-        res.status(201).json({
-            exito: true,
-            mensaje: 'Paciente registrado exitosamente',
-            paciente: resultado.rows[0]
-        });
-
-    } catch (error) {
-        console.error('Error en POST /api/patients:', error.message);
-        // Manejo de error si el RUT ya existe (código 23505 en PostgreSQL)
-        if (error.code === '23505') {
-            return res.status(409).json({ error: 'El RUT ingresado ya está registrado en el sistema' });
-        }
-        // Manejo de error si algún CHECK constraint de la BD falla (ej: RUT con formato inválido)
-        if (error.code === '23514') {
-            return res.status(400).json({ error: 'Alguno de los datos no cumple el formato esperado (revisa RUT, sexo, tipo de sangre o previsión).' });
-        }
-        res.status(500).json({ error: 'Error interno al registrar el paciente' });
-      
-app.post("/api/patients", async (req, res) => {
-  try {
-    const { rut, nombre, fechaNacimiento, telefono, email } = req.body;
-
-    // Validar campos obligatorios según la BD (001_initial_schema.sql)
-    if (!rut || !nombre || !fechaNacimiento) {
-      return res.status(400).json({
-        error: "Faltan campos obligatorios: rut, nombre o fecha de nacimiento",
-      });
-    }
-
-    const db = require("../shared/config/Database");
-
-    const insertQuery = `
-            INSERT INTO Pacientes (rut, nombre, fecha_nacimiento, telefono, email) 
-            VALUES ($1, $2, $3, $4, $5) 
-            RETURNING *;
-        `;
-
     const valores = [
       rut,
       nombre,
       fechaNacimiento,
       telefono || null,
       email || null,
+      direccion || null,
+      sexo || "Masculino",
+      contactoEmergenciaNombre || null,
+      contactoEmergenciaTelefono || null,
+      prevision || "Fonasa",
+      isaprePlan || null,
+      tipoSangre || "Desconocido / No informado",
+      Array.isArray(alergias) ? alergias.join(", ") : (alergias || ""),
+      Array.isArray(enfermedadesCronicas) ? enfermedadesCronicas.join(", ") : (enfermedadesCronicas || ""),
+      medicamentosActuales || null,
+      pesoKg ? parseFloat(pesoKg) : null,
+      alturaCm ? parseInt(alturaCm, 10) : null,
+      observacionesMedicas || null,
     ];
-    const resultado = await db.query(insertQuery, valores);
+
+    const resultado = await pool.query(insertQuery, valores);
 
     res.status(201).json({
       exito: true,
@@ -432,13 +362,12 @@ app.post("/api/patients", async (req, res) => {
       paciente: resultado.rows[0],
     });
   } catch (error) {
-    console.error("Error en /api/patients:", error.message);
-    // Manejo de error si el RUT ya existe (código 23505 en PostgreSQL)
+    console.error("Error en POST /api/patients:", error.message);
     if (error.code === "23505") {
-      return res
-        .status(409)
-        .json({ error: "El RUT ingresado ya está registrado en el sistema" });
-
+      return res.status(409).json({ error: "El RUT ingresado ya está registrado" });
+    }
+    if (error.code === "23514") {
+      return res.status(400).json({ error: "Alguno de los datos no cumple el formato esperado (revisa campos de la BD)." });
     }
     res.status(500).json({ error: "Error interno al registrar el paciente" });
   }
@@ -480,85 +409,6 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
 
-=======
-// ============ RUTAS DE PACIENTES ============
-
-/**
- * GET /api/patients/:rut
- * Busca un paciente por su RUT
- */
-app.get("/api/patients/:rut", async (req, res) => {
-  try {
-    const { rut } = req.params;
-    const db = require("../shared/config/Database");
-
-    // Buscamos al paciente en la base de datos
-    const query = "SELECT * FROM Pacientes WHERE rut = $1";
-    const resultado = await db.query(query, [rut]);
-
-    if (resultado.rows.length === 0) {
-      // Retornamos 404 para que el frontend sepa que debe abrir el formulario de registro
-      return res.status(404).json({ error: "Paciente no encontrado" });
-    }
-
-    // Si lo encuentra, devuelve los datos
-    res.json(resultado.rows[0]);
-  } catch (error) {
-    console.error("Error en GET /api/patients/:rut:", error.message);
-    res.status(500).json({ error: "Error al consultar la base de datos" });
-  }
-});
-
-/**
- * POST /api/patients
- * Registra un nuevo paciente
- */
-app.post("/api/patients", async (req, res) => {
-  try {
-    const { rut, nombre, fechaNacimiento, telefono, email } = req.body;
-
-    // Validar campos obligatorios de la tabla
-    if (!rut || !nombre || !fechaNacimiento) {
-      return res.status(400).json({
-        error: "Faltan campos obligatorios: rut, nombre o fecha de nacimiento",
-      });
-    }
-
-    const db = require("../shared/config/Database");
-
-    const insertQuery = `
-            INSERT INTO Pacientes (rut, nombre, fecha_nacimiento, telefono, email) 
-            VALUES ($1, $2, $3, $4, $5) 
-            RETURNING *;
-        `;
-
-    const valores = [
-      rut,
-      nombre,
-      fechaNacimiento,
-      telefono || null,
-      email || null,
-    ];
-    const resultado = await db.query(insertQuery, valores);
-
-    // Retornamos 201 (Created) con los datos del paciente
-    res.status(201).json({
-      exito: true,
-      mensaje: "Paciente registrado exitosamente",
-      paciente: resultado.rows[0],
-    });
-  } catch (error) {
-    console.error("Error en POST /api/patients:", error.message);
-    if (error.code === "23505") {
-      // Código de error de PostgreSQL para "Unique violation"
-      return res
-        .status(409)
-        .json({ error: "El RUT ingresado ya está registrado" });
-    }
-    res.status(500).json({ error: "Error interno al registrar el paciente" });
-  }
-});
-
 // ============ RUTAS ESTÁTICAS ============
 app.get("*", (req, res, next) => {
   if (req.originalUrl.startsWith("/api/")) return next();
@@ -592,7 +442,6 @@ io.on("connection", (socket) => {
   console.log("🔌 Nuevo cliente de dashboard conectado:", socket.id);
 });
 
-// ============ INICIAR SERVIDOR ============
 httpServer.listen(PORT, () => {
   console.log(`
     ╔════════════════════════════════════════════╗
