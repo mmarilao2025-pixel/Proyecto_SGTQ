@@ -4,7 +4,7 @@ import PatientRegistry, { Paciente } from "./pages/components/PatientRegistry";
 import SurgeryScheduler from "./pages/components/SurgeryScheduler";
 import SurgeryList from "./pages/components/SurgeryList";
 import FatigueCard from "./pages/components/FatigueCard";
-import EventStatsCard from "./pages/components/EventStatsCard";
+import InsumosView from "./pages/components/InsumosView";
 
 const App: React.FC = () => {
   const [activeView, setActiveView] = useState("cronograma");
@@ -15,10 +15,10 @@ const App: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen bg-slate-50 font-sans overflow-hidden">
-      {/* 1. Barra Lateral Pasando el estado de navegación */}
+      {/* 1. Sidebar izquierdo — navegación */}
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
 
-      {/* 2. Contenido Principal Dinámico */}
+      {/* 2. Contenido principal */}
       <div className="flex-1 overflow-y-auto p-8">
         {(() => {
           switch (activeView) {
@@ -64,8 +64,8 @@ const App: React.FC = () => {
                 />
               );
 
-            case "auditoria":
-              return <EventStatsCard />;
+            case "insumos":
+              return <InsumosView />;
 
             default:
               return <SurgeryList />;
@@ -75,5 +75,4 @@ const App: React.FC = () => {
     </div>
   );
 };
-
 export default App;

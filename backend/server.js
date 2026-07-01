@@ -18,6 +18,7 @@ const {
   obtenerEstadisticasEventos,
   GestorEventosSingleton,
 } = require("./comportamiento_observador");
+const { obtenerInsumos } = require("./insumoService");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -35,6 +36,18 @@ app.use(express.json());
 app.use(express.static(distPath)); // Servir frontend compilado desde dist
 
 // ============ RUTAS API ============
+
+/**
+ * GET /api/insumos — Lista todos los insumos con su stock actual
+ */
+app.get("/api/insumos", async (req, res) => {
+  try {
+    const insumos = await obtenerInsumos();
+    res.json(insumos);
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener insumos" });
+  }
+});
 
 /**
  * GET /api/dashboard
@@ -64,7 +77,7 @@ app.get("/api/dashboard", (req, res) => {
       surgeries: [
         {
           id: 1,
-          namePatient: "Paciente A",
+          patient: "Paciente A",
           type: "Cirugía General",
           startTime: "08:00",
           endTime: "10:30",
@@ -85,6 +98,7 @@ app.get("/api/dashboard", (req, res) => {
  */
 app.post("/api/surgery/schedule", async (req, res) => {
   try {
+    // 1. Extraemos los datos que envía el frontend (¡Aquí capturamos los nuevos!)
     const {
       rutPaciente,
       tipoCirugia,
@@ -100,6 +114,7 @@ app.post("/api/surgery/schedule", async (req, res) => {
         .json({ error: "Faltan datos obligatorios para agendar." });
     }
 
+    // 2. Armamos el Payload para el Motor SOLID
     const payload = {
       rutPaciente: rutPaciente,
       tipoCirugia: tipoCirugia,
@@ -107,14 +122,17 @@ app.post("/api/surgery/schedule", async (req, res) => {
       quirofanoId: quirofanoId,
       fechaHora: fechaHora,
       duracionEstimada: duracionEstimada || 60,
-      medicoHoras: 30,
+      medicoHoras: 30, // Simulado para la validación
     };
 
     const pool = db.getPool();
-    const facade = new GestorCirugiasFacade();
+
+    // 3. Ejecutamos el Facade (Aquí ocurre la magia de las validaciones de horario)
+    const facade = new GestorCirugiasFacade(); // O new SurgeryBookingFacade() según el que uses
     const resultado = await facade.validarYAgendarCirugia(payload, pool);
 
     if (resultado.exito) {
+      // Guardamos en la base de datos real
       const insertQuery = `
                 INSERT INTO Cirugias (paciente_rut, medico_id, pabellon_id, tipo_cirugia, fecha_hora, duracion_estimada_minutos, estado)
                 VALUES ($1, $2, $3, $4, $5, $6, 'Programada')
@@ -130,10 +148,16 @@ app.post("/api/surgery/schedule", async (req, res) => {
       ];
       const nuevaCirugia = await pool.query(insertQuery, valoresInsert);
 
-      const gestorEventosInstance = new GestorEventosQuirurgicos();
+      // === INSTANCIACIÓN Y USO DEL PATRÓN OBSERVER ===
+      const gestorEventos = new GestorEventosQuirurgicos();
       const moduloNotificaciones = new ObservadorNotificaciones();
-      gestorEventosInstance.suscribir(moduloNotificaciones);
-      gestorEventosInstance.notificar("cirugia_aprobada", payload);
+
+      // Suscribimos el observador de WhatsApp al gestor de eventos
+      gestorEventos.suscribir(moduloNotificaciones);
+
+      // Notificamos el evento pasándole los datos del payload
+      gestorEventos.notificar("cirugia_aprobada", payload);
+      // ===============================================
 
       res.status(200).json({
         exito: true,
@@ -170,10 +194,15 @@ app.post("/api/surgery/atomic", async (req, res) => {
       tipoCirugia,
       fechaInicio,
       fechaFin,
+      requiereTransfusion,
+      tipoSangre,
+      litrosSangre,
     } = req.body;
+
     if (!rutPaciente || !pabellonId || !camaId || !tipoCirugia) {
       return res.status(400).json({ error: "Datos incompletos" });
     }
+
     const resultado = await agendarCirugiaAtomica(
       rutPaciente,
       pabellonId,
@@ -181,7 +210,11 @@ app.post("/api/surgery/atomic", async (req, res) => {
       tipoCirugia,
       fechaInicio,
       fechaFin,
+      requiereTransfusion,
+      tipoSangre,
+      litrosSangre,
     );
+
     if (resultado.exito) res.json(resultado);
     else res.status(400).json(resultado);
   } catch (error) {
@@ -241,38 +274,25 @@ app.get("/api/team", (req, res) => {
   }
 });
 
-// ============ RUTAS DE PACIENTES (FICHA CLÍNICA UNIFICADA) ============
-
 /**
  * GET /api/patients/:rut
- * Consulta la ficha clínica completa de un paciente por su RUT
+ * Consulta la ficha clínica de un paciente específico por su RUT
  */
 app.get("/api/patients/:rut", async (req, res) => {
   try {
     const pool = db.getPool();
+    // Limpiamos el RUT que viene de la URL (quitamos puntos y espacios, dejamos guion)
     const rutBusqueda = req.params.rut.trim();
 
     const query = `
             SELECT 
                 rut, 
-                nombre,
-                fecha_nacimiento AS "fechaNacimiento",
-                telefono,
-                email,
-                direccion,
+                nombre, 
                 sexo, 
-                contacto_emergencia_nombre AS "contactoEmergenciaNombre",
-                contacto_emergencia_telefono AS "contactoEmergenciaTelefono",
-                prevision,
-                isapre_plan AS "isaprePlan",
+                prevision, 
                 tipo_sangre AS "tipoSangre", 
                 alergias, 
-                enfermedades_cronicas AS "enfermedadesCronicas",
-                medicamentos_actuales AS "medicamentosActuales",
-                peso_kg AS "pesoKg",
-                altura_cm AS "alturaCm",
-                observaciones_medicas AS "observacionesMedicas",
-                estado
+                enfermedades_cronicas AS "enfermedadesCronicas"
             FROM Pacientes 
             WHERE rut = $1;
         `;
@@ -280,9 +300,11 @@ app.get("/api/patients/:rut", async (req, res) => {
     const resultado = await pool.query(query, [rutBusqueda]);
 
     if (resultado.rowCount > 0) {
+      // El paciente existe, devolvemos su ficha clínica con código 200
       console.log(`🔍 Ficha clínica encontrada para el RUT: ${rutBusqueda}`);
       return res.status(200).json(resultado.rows[0]);
     } else {
+      // No existe, devolvemos 404 para que React despliegue el formulario de registro
       console.log(`⚠️ Paciente no registrado con RUT: ${rutBusqueda}`);
       return res.status(404).json({ mensaje: "Paciente no encontrado." });
     }
@@ -296,40 +318,22 @@ app.get("/api/patients/:rut", async (req, res) => {
 
 /**
  * POST /api/patients
- * Registra un nuevo paciente con todos sus datos clínicos
+ * Registra un nuevo paciente en la base de datos
  */
 app.post("/api/patients", async (req, res) => {
   try {
-    const {
-      rut, nombre, fechaNacimiento, telefono, email,
-      direccion, sexo, contactoEmergenciaNombre, contactoEmergenciaTelefono,
-      prevision, isaprePlan, tipoSangre,
-      alergias, enfermedadesCronicas, medicamentosActuales,
-      pesoKg, alturaCm, observacionesMedicas
-    } = req.body;
+    const { rut, nombre, fechaNacimiento, telefono, email } = req.body;
 
+    // Validar campos obligatorios según la BD (001_initial_schema.sql)
     if (!rut || !nombre || !fechaNacimiento) {
       return res.status(400).json({
         error: "Faltan campos obligatorios: rut, nombre o fecha de nacimiento",
       });
     }
 
-    const pool = db.getPool();
-
     const insertQuery = `
-            INSERT INTO Pacientes (
-                rut, nombre, fecha_nacimiento, telefono, email,
-                direccion, sexo, contacto_emergencia_nombre, contacto_emergencia_telefono,
-                prevision, isapre_plan, tipo_sangre,
-                alergias, enfermedades_cronicas, medicamentos_actuales,
-                peso_kg, altura_cm, observaciones_medicas
-            ) VALUES (
-                $1, $2, $3, $4, $5,
-                $6, $7, $8, $9,
-                $10, $11, $12,
-                $13, $14, $15,
-                $16, $17, $18
-            )
+            INSERT INTO Pacientes (rut, nombre, fecha_nacimiento, telefono, email) 
+            VALUES ($1, $2, $3, $4, $5) 
             RETURNING *;
         `;
 
@@ -339,22 +343,8 @@ app.post("/api/patients", async (req, res) => {
       fechaNacimiento,
       telefono || null,
       email || null,
-      direccion || null,
-      sexo || "Masculino",
-      contactoEmergenciaNombre || null,
-      contactoEmergenciaTelefono || null,
-      prevision || "Fonasa",
-      isaprePlan || null,
-      tipoSangre || "Desconocido / No informado",
-      Array.isArray(alergias) ? alergias.join(", ") : (alergias || ""),
-      Array.isArray(enfermedadesCronicas) ? enfermedadesCronicas.join(", ") : (enfermedadesCronicas || ""),
-      medicamentosActuales || null,
-      pesoKg ? parseFloat(pesoKg) : null,
-      alturaCm ? parseInt(alturaCm, 10) : null,
-      observacionesMedicas || null,
     ];
-
-    const resultado = await pool.query(insertQuery, valores);
+    const resultado = await db.query(insertQuery, valores);
 
     res.status(201).json({
       exito: true,
@@ -362,12 +352,12 @@ app.post("/api/patients", async (req, res) => {
       paciente: resultado.rows[0],
     });
   } catch (error) {
-    console.error("Error en POST /api/patients:", error.message);
+    console.error("Error en /api/patients:", error.message);
+    // Manejo de error si el RUT ya existe (código 23505 en PostgreSQL)
     if (error.code === "23505") {
-      return res.status(409).json({ error: "El RUT ingresado ya está registrado" });
-    }
-    if (error.code === "23514") {
-      return res.status(400).json({ error: "Alguno de los datos no cumple el formato esperado (revisa campos de la BD)." });
+      return res
+        .status(409)
+        .json({ error: "El RUT ingresado ya está registrado en el sistema" });
     }
     res.status(500).json({ error: "Error interno al registrar el paciente" });
   }
@@ -442,6 +432,13 @@ io.on("connection", (socket) => {
   console.log("🔌 Nuevo cliente de dashboard conectado:", socket.id);
 });
 
+// ============ INICIAR SERVIDOR ============
 httpServer.listen(PORT, () => {
-  console.log(`SGTQ - Servidor corriendo en puerto ${PORT}`);
+  console.log(`
+    ╔════════════════════════════════════════════╗
+    ║   SGTQ - Sistema de Gestión Quirúrgica     ║
+    ║   Servidor HTTP y WSS en puerto ${PORT}       ║
+    ║   http://localhost:${PORT}                    ║
+    ╚════════════════════════════════════════════╝
+    `);
 });
