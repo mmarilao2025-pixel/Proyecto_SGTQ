@@ -2,15 +2,13 @@
 module.exports = {
   testEnvironment: "node",
 
-  roots: ["<rootDir>/backend/tests"],
-
   testMatch: [
-    "**/*.test.js",
-    "**/*.test.ts",
-    "**/*Test.js",
-    "**/*Tests.js",
-    "**/*Test.ts",
-    "**/*Tests.ts"
+    "<rootDir>/backend/tests/**/*.test.js",
+    "<rootDir>/backend/tests/**/*.test.ts",
+    "<rootDir>/backend/tests/**/*Test.js",
+    "<rootDir>/backend/tests/**/*Tests.js",
+    "<rootDir>/backend/tests/**/*Test.ts",
+    "<rootDir>/backend/tests/**/*Tests.ts"
   ],
 
   moduleFileExtensions: ["js", "ts", "json"],
@@ -31,7 +29,8 @@ module.exports = {
     "backend/**/*.ts",
     "shared/**/*.js",
     "!backend/tests/**",
-    "!backend/server.js"
+    "!backend/server.js",
+    "!backend/comportamiento_observador.demo.js"
   ],
 
   coverageDirectory: "coverage",
