@@ -13,8 +13,6 @@ export interface Paciente {
   contactoEmergenciaTelefono?: string;
   previsionSalud: string;
   planIsapre?: string;
-  
-  // Datos Clínicos
   alergias: string[];
   tipoSangre: string;
   cirugiasPrevias: string;
@@ -58,28 +56,27 @@ const PatientRegistry: React.FC<PatientRegistryProps> = ({ onPacienteValidado })
   const opcionesAlergias = ["Penicilina", "Lactosa", "Aspirina", "Yodo", "Látex"];
   const opcionesEnfermedades = ["Diabetes", "Hipertensión", "Cardiopatías", "Asma", "Hipotiroidismo"];
 
-  // Estado del formulario expandido
-  const [formData, setFormData] = useState({
-    nombre: '',
-    fechaNacimiento: '',
-    sexo: 'Masculino',
-    telefono: '',
-    email: '',
-    direccion: '',
-    contactoEmergenciaNombre: '',
-    contactoEmergenciaTelefono: '',
-    previsionSalud: 'Fonasa',
-    planIsapre: '',
-    alergias: [] as string[],
-    tipoSangre: 'Desconocido / No informado',
-    cirugiasPrevias: '',
-    enfermedadesCronicas: [] as string[],
-    medicamentosActuales: '',
-    peso: '',
-    altura: '',
-    observacionesMedicas: '',
-    estadoPaciente: 'Activo'
-  });
+  const [formData, setFormData] = useState<Omit<Paciente, 'rut'>>({
+  nombre: '',
+  fechaNacimiento: '',
+  sexo: 'Masculino',
+  telefono: '',
+  email: '',
+  direccion: '',
+  contactoEmergenciaNombre: '',
+  contactoEmergenciaTelefono: '',
+  previsionSalud: 'Fonasa',
+  planIsapre: '',
+  alergias: [],             
+  tipoSangre: 'Desconocido / No informado',
+  cirugiasPrevias: '',
+  enfermedadesCronicas: [], 
+  medicamentosActuales: '',
+  peso: '',
+  altura: '',
+  observacionesMedicas: '',
+  estadoPaciente: 'Activo',      
+})
 
   // Manejo de multi-selección para Alergias y Enfermedades Crónicas
   const handleCheckboxGroup = (campo: 'alergias' | 'enfermedadesCronicas', valor: string) => {

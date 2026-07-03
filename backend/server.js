@@ -4,7 +4,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config({ path: '../shared/config/env/.env' });
 const db = require('../shared/config/Database');
-const path = require('path');
+const path = require('node:path');
 const { createServer } = require('http'); 
 const { Server } = require('socket.io');
 const { setupSwagger } = require('./swagger');  

@@ -1,6 +1,5 @@
 const db = require("../shared/config/Database");
-
-async function agendarCirugiaAtomica(
+async function agendarCirugiaAtomica({
   rutPaciente,
   pabellonId,
   camaId,
@@ -10,7 +9,7 @@ async function agendarCirugiaAtomica(
   requiereTransfusion = false,
   tipoSangre = null,
   litrosSangre = 2,
-) {
+}) {
   const pool = db.getPool();
   //CRÍTICO: Para transacciones, debemos "pedir prestado" un cliente específico del pool
   const client = await pool.connect();
