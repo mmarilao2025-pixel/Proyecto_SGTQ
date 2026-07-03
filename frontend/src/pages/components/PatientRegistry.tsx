@@ -273,7 +273,7 @@ const PatientRegistry: React.FC<PatientRegistryProps> = ({ onPacienteValidado })
 
               <label className="block">
                 <span className="text-xs font-semibold text-slate-600">Previsión de Salud *</span>
-                <select value={formData.previsionSalud} onChange={(e) => setFormData({...formData, previsionSalud: e.target.value, planIsapre: e.target.value !== 'Isapre' ? '' : formData.planIsapre})} className="mt-1 block w-full rounded-lg border-slate-300 bg-slate-50 p-2.5 text-sm outline-none border">
+                <select value={formData.previsionSalud} onChange={(e) => setFormData({...formData, previsionSalud: e.target.value, planIsapre: e.target.value === 'Isapre' ? formData.planIsapre : ''})} className="mt-1 block w-full rounded-lg border-slate-300 bg-slate-50 p-2.5 text-sm outline-none border">
                   <option value="Fonasa">Fonasa</option>
                   <option value="Isapre">Isapre</option>
                 </select>
