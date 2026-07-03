@@ -38,7 +38,6 @@ const SurgeryScheduler: React.FC<SurgerySchedulerProps> = ({
     const clave = normalizarEspecialidad(texto);
     const equivalencias: Record<string, string> = {
       "cirugia general": "cirugia general",
-      "cirugia general": "cirugia general",
       "cardiovascular": "cardiovascular",
       "cardiologia": "cardiovascular",
       "ortopedia": "ortopedia",
