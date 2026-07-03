@@ -68,7 +68,7 @@ const PatientRegistry: React.FC<PatientRegistryProps> = ({ onPacienteValidado })
   previsionSalud: 'Fonasa',
   planIsapre: '',
   alergias: [],             
-  tipoSangre: 'Desconocido / No informado',
+  tipoSangre: 'Desconocido',
   cirugiasPrevias: '',
   enfermedadesCronicas: [], 
   medicamentosActuales: '',
@@ -116,7 +116,7 @@ const PatientRegistry: React.FC<PatientRegistryProps> = ({ onPacienteValidado })
       } else {
         setError('Error al consultar la base de datos.');
       }
-    } catch (err) {
+    } catch {
       setError('Error de conexión con el servidor.');
     } finally {
       setLoading(false);
@@ -146,7 +146,7 @@ const PatientRegistry: React.FC<PatientRegistryProps> = ({ onPacienteValidado })
         const errorData = await response.json();
         setError(errorData.error || 'Error al registrar el paciente en el sistema.');
       }
-    } catch (err) {
+    } catch {
       setError('Error de conexión al registrar.');
     } finally {
       setLoading(false);
@@ -336,7 +336,7 @@ const PatientRegistry: React.FC<PatientRegistryProps> = ({ onPacienteValidado })
                   <option value="B-">B-</option>
                   <option value="AB+">AB+</option>
                   <option value="AB-">AB-</option>
-                  <option value="Desconocido / No informado">Desconocido / No informado</option>
+                  <option value="Desconocido">Desconocido</option>
                 </select>
               </label>
 

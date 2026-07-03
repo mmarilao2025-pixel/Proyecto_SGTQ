@@ -28,6 +28,11 @@ describe("RecursosHumanosExternaAPI", () => {
 });
 
 describe("InventarioExternoAPI", () => {
+  afterAll(async () => {
+    const Database = require("../../shared/config/Database");
+    await Database.close();
+  });
+
   test("marca como no disponible cuando la cirugía es cardíaca", async () => {
     const resultado =
       await InventarioExternoAPI.verificarNivelInsumos("Cirugía Cardíaca");

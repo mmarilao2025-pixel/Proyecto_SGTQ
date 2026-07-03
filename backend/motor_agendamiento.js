@@ -6,7 +6,7 @@
 // DIP: Depende de abstracciones, no de concretos
 
 class IReglaValidacion {
-  async validar(contexto) {
+  async validar() {
     throw new Error("Método validar no implementado");
   }
   getNombre() {
@@ -100,7 +100,29 @@ class ReglaTiempoCirugia extends IReglaValidacion {
 
 class ReglaEspecialidadMedico extends IReglaValidacion {
   async validar(ctx) {
-    return ctx.medicoEspecialidad === ctx.especialidadRequerida;
+    const normalizar = (texto) =>
+      texto
+        ? texto
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "")
+            .toLowerCase()
+            .trim()
+        : "";
+
+    const canonizar = (texto) => {
+      const clave = normalizar(texto);
+      const equivalencias = {
+        "cardiologia": "cardiovascular",
+        "cardiovascular": "cardiovascular",
+        "cirugia general": "cirugia general",
+        "ortopedia": "ortopedia",
+        "neurocirugia": "neurocirugia",
+        "ginecologia": "ginecologia",
+      };
+      return equivalencias[clave] || clave;
+    };
+
+    return canonizar(ctx.medicoEspecialidad) === canonizar(ctx.especialidadRequerida);
   }
   getNombre() {
     return "Especialidad del Médico";
@@ -204,18 +226,18 @@ class ReglaTiempoRecuperacion extends IReglaValidacion {
 // ==========================================
 class ReglaDisponibilidadMedico extends IReglaValidacion {
   async validar(ctx) {
-    if (!ctx.dbPool || !ctx.medicoId || !ctx.fechaHora) return true;
+    if (!ctx.dbPool || !ctx.medicoId || !ctx.fechaHora || !ctx.duracionEstimada) return true;
 
     try {
+      const fechaInicio = new Date(ctx.fechaHora);
+      const fechaFin = new Date(fechaInicio.getTime() + ctx.duracionEstimada * 60000);
       const query = `
-                SELECT id FROM Cirugias 
-                WHERE medico_id = $1 AND estado IN ('Programada', 'Confirmada')
-                AND (fecha_hora < $2::timestamp + ($3 || ' minutes')::interval
-                AND fecha_hora + (duracion_estimada_minutos || ' minutes')::interval > $2::timestamp)
+                SELECT id FROM Cirugias
+                WHERE medico_id = $1 AND estado IN ('Programada', 'En Progreso')
+                AND NOT (fecha_fin <= $2::timestamp OR fecha_inicio >= $3::timestamp)
             `;
-      const valores = [ctx.medicoId, ctx.fechaHora, ctx.duracionEstimada];
+      const valores = [ctx.medicoId, fechaInicio.toISOString(), fechaFin.toISOString()];
       const resultado = await ctx.dbPool.query(query, valores);
-      // Pasa la validación (true) SOLO si no hay cirugías que choquen (rowCount === 0)
       return resultado.rowCount === 0;
     } catch (error) {
       console.error("Error SQL en ReglaDisponibilidadMedico:", error);
@@ -235,16 +257,17 @@ class ReglaDisponibilidadMedico extends IReglaValidacion {
 
 class ReglaDisponibilidadPabellon extends IReglaValidacion {
   async validar(ctx) {
-    if (!ctx.dbPool || !ctx.quirofanoId || !ctx.fechaHora) return true;
+    if (!ctx.dbPool || !ctx.quirofanoId || !ctx.fechaHora || !ctx.duracionEstimada) return true;
 
     try {
+      const fechaInicio = new Date(ctx.fechaHora);
+      const fechaFin = new Date(fechaInicio.getTime() + ctx.duracionEstimada * 60000);
       const query = `
-                SELECT id FROM Cirugias 
-                WHERE pabellon_id = $1 AND estado IN ('Programada', 'Confirmada')
-                AND (fecha_hora < $2::timestamp + ($3 || ' minutes')::interval
-                AND fecha_hora + (duracion_estimada_minutos || ' minutes')::interval > $2::timestamp)
+                SELECT id FROM Cirugias
+                WHERE pabellon_id = $1 AND estado IN ('Programada', 'En Progreso')
+                AND NOT (fecha_fin <= $2::timestamp OR fecha_inicio >= $3::timestamp)
             `;
-      const valores = [ctx.quirofanoId, ctx.fechaHora, ctx.duracionEstimada];
+      const valores = [ctx.quirofanoId, fechaInicio.toISOString(), fechaFin.toISOString()];
       const resultado = await ctx.dbPool.query(query, valores);
       return resultado.rowCount === 0;
     } catch (error) {
@@ -347,7 +370,7 @@ class MotorAgendamiento {
     };
   }
 
-  validarContexto(contexto) {
+  validarContexto(/* contexto */) {
     // Adaptado para que no bloquee si falta un dato médico (se autocompleta en el Facade)
     return true;
   }
@@ -355,7 +378,7 @@ class MotorAgendamiento {
   contarPorSeveridad(resultados) {
     const conteo = { CRITICA: 0, ALTA: 0, MEDIA: 0, BAJA: 0 };
     resultados.forEach((r) => {
-      if (conteo.hasOwnProperty(r.severidad)) conteo[r.severidad]++;
+      if (Object.prototype.hasOwnProperty.call(conteo, r.severidad)) conteo[r.severidad]++;
     });
     return conteo;
   }
@@ -406,5 +429,5 @@ class GestorCirugiasFacade {
 module.exports = {
   IReglaValidacion,
   MotorAgendamiento,
-  GestorCirugiasFacade, // ¡Exportamos el Facade para que server.js lo encuentre!
+  GestorCirugiasFacade, 
 };

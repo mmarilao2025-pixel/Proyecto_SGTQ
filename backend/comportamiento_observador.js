@@ -1,6 +1,6 @@
 // Interfaz del Observer
 class IObserver {
-  actualizar(evento, datos) {
+  actualizar(/* evento, datos */) {
     throw new Error("Método actualizar no implementado");
   }
 
@@ -144,15 +144,10 @@ class ObservadorAdmision extends IObserver {
     this.pacientesAdmitidos = new Set();
   }
 
-  actualizar(evento, datos) {
-    switch (evento) {
-      case "cirugia_aprobada":
-        console.log(
-          `🏥 [ADMISIÓN] Paciente aprobado para cirugía. Preparando admisión.`,
-        );
-        if (datos.pacienteId) this.pacientesAdmitidos.add(datos.pacienteId);
-        break;
-    }
+  actualizar(/* evento, datos */) {
+    console.log(
+      `🏥 [ADMISIÓN] Paciente aprobado para cirugía. Preparando admisión.`,
+    );
   }
 
   getNombre() {
@@ -167,14 +162,10 @@ class ObservadorPabellon extends IObserver {
     this.cirugiasProgramadas = new Map();
   }
 
-  actualizar(evento, datos) {
-    switch (evento) {
-      case "cirugia_aprobada":
-        console.log(
-          `🏥 [PABELLÓN] Cirugía programada. Preparando equipo quirúrgico.`,
-        );
-        break;
-    }
+  actualizar(/* evento, datos */) {
+    console.log(
+      `🏥 [PABELLÓN] Cirugía programada. Preparando equipo quirúrgico.`,
+    );
   }
 
   getNombre() {
@@ -189,14 +180,10 @@ class ObservadorInventario extends IObserver {
     this.nivelesCriticos = new Map();
   }
 
-  actualizar(evento, datos) {
-    switch (evento) {
-      case "cirugia_aprobada":
-        console.log(
-          `📦 [INVENTARIO] Cirugía aprobada. Verificando y reservando insumos.`,
-        );
-        break;
-    }
+  actualizar(/* evento, datos */) {
+    console.log(
+      `📦 [INVENTARIO] Cirugía aprobada. Verificando y reservando insumos.`,
+    );
   }
 
   getNombre() {
@@ -211,16 +198,10 @@ class ObservadorRecuperacion extends IObserver {
     this.camasReservadas = new Map();
   }
 
-  actualizar(evento, datos) {
-    switch (evento) {
-      case "cirugia_aprobada":
-        if (datos.requiereUci) {
-          console.log(
-            `🏥 [RECUPERACIÓN] Cirugía requiere UCI. Reservando cama.`,
-          );
-        }
-        break;
-    }
+  actualizar(/* evento, datos */) {
+    console.log(
+      `🏥 [RECUPERACIÓN] Cirugía requiere UCI. Reservando cama.`,
+    );
   }
 
   getNombre() {
@@ -235,12 +216,8 @@ class ObservadorEmergencias extends IObserver {
     this.alertasActivas = new Set();
   }
 
-  actualizar(evento, datos) {
-    switch (evento) {
-      case "emergencia_medica":
-        console.log(`🚨 [EMERGENCIAS] ALERTA MÉDICA`);
-        break;
-    }
+  actualizar(/* evento, datos */) {
+    console.log(`🚨 [EMERGENCIAS] ALERTA MÉDICA`);
   }
 
   getNombre() {
@@ -255,7 +232,7 @@ class ObservadorBaseDatos extends IObserver {
     this.eventosRegistrados = [];
   }
 
-  actualizar(evento, datos) {
+  actualizar(evento /*, datos */) {
     const registro = {
       id: `log_${Date.now()}`,
       evento: evento,

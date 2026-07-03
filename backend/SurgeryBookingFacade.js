@@ -31,15 +31,15 @@ class GestorCirugiasFacade {
    * @param {Object} payload - Datos de la solicitud de cirugía desde server.js
    * @returns {Object} { exito, mensaje, detalles }
    */
-  async validarYAgendarCirugia(payload) {
+  async validarYAgendarCirugia(payload, dbPool = null) {
     console.log("\n=== SGTQ: Iniciando validación multicriterio ===");
     console.log(
-      `Paciente: ${payload.pacienteId} | Médico: ${payload.medicoId} | Tipo: ${payload.tipoCirugia}`,
+      `Paciente: ${payload.pacienteId || payload.rutPaciente} | Médico: ${payload.medicoId} | Tipo: ${payload.tipoCirugia}`,
     );
 
     try {
       // FASE 1: Consultar APIs externas en paralelo (NFR-1: rendimiento)
-      const contexto = await this._construirContexto(payload);
+      const contexto = await this._construirContexto(payload, dbPool);
 
       // FASE 2: Ejecutar motor de reglas SOLID con el contexto construido
       const resultado = await this.motor.procesar(contexto);
@@ -95,7 +95,7 @@ class GestorCirugiasFacade {
    * @param {Object} payload - Datos crudos del request
    * @returns {Object} contexto - Objeto normalizado para el motor de reglas
    */
-  async _construirContexto(payload) {
+  async _construirContexto(payload, dbPool = null) {
     console.log("→ Consultando APIs externas en paralelo...");
 
     // Consultas paralelas a sistemas externos (simulados en primera entrega)
@@ -116,8 +116,19 @@ class GestorCirugiasFacade {
         ? 13 // supera límite → se marca como fatiga (>12h)
         : Math.min(estadoMedico.horasSemanalesAcumuladas % 12, 12);
 
+    const duracionEnMinutos = Number(payload.duracionEstimada) || 240;
+    const duracionEnHoras = duracionEnMinutos / 60;
+
     // Construir contexto normalizado para el motor de reglas
     return {
+      dbPool,
+      fechaHora: payload.fechaHora,
+      duracionEstimada: duracionEnMinutos,
+      tipoCirugia: payload.tipoCirugia,
+      especialidadRequerida: payload.especialidadRequerida || "Cirugía General",
+      medicoId: payload.medicoId,
+      quirofanoId: payload.quirofanoId,
+
       // Datos del paciente
       pacienteApto: resultadoLab.aptoParaCirugia,
       alergiasPaciente: payload.alergiasPaciente || [],
@@ -131,18 +142,16 @@ class GestorCirugiasFacade {
       medicoEspecialidad: payload.medicoEspecialidad || "Cirugía General",
 
       // Datos de la cirugía
-      tipoCirugia: payload.tipoCirugia,
-      especialidadRequerida: payload.especialidadRequerida || "Cirugía General",
-      duracionEstimadaCirugia: payload.duracionEstimadaCirugia || 4,
+      duracionEstimadaCirugia: duracionEnHoras,
       medicamentosRequeridos: payload.medicamentosRequeridos || [],
       requiereTransfusion: payload.requiereTransfusion || false,
       compatibilidadSanguinea: payload.compatibilidadSanguinea || "COMPATIBLE",
 
       // Recursos hospitalarios (FR-1: Validación de Recursos / BR-1)
       camasUCI: payload.requiereUci
-        ? (payload.camasUCI ?? 3) // si requiere UCI, usar valor provisto
-        : 99, // no requiere UCI → no bloquear por camas
-      insumos: estadoInventario.disponible ? (payload.insumos ?? 15) : 0, // inventario no disponible → fuerza fallo
+        ? (payload.camasUCI ?? 3)
+        : 99,
+      insumos: estadoInventario.disponible ? (payload.insumos ?? 15) : 0,
     };
   }
 }

@@ -56,6 +56,23 @@ describe("GestorCirugiasFacade.validarYAgendarCirugia", () => {
     expect(Array.isArray(resultado.detalles)).toBe(true);
   });
 
+  test("aprueba la cirugía cuando el médico seleccionado tiene especialidad coincidente", async () => {
+    mockApisExternas({ apto: true, horasSemanales: 10, insumosDisponibles: true });
+
+    const facade = new GestorCirugiasFacade();
+    const resultado = await facade.validarYAgendarCirugia({
+      pacienteId: "1",
+      medicoId: 1,
+      tipoCirugia: "Cirugía Cardíaca",
+      requiereUci: false,
+      medicoEspecialidad: "Cardiología",
+      especialidadRequerida: "Cardiovascular",
+    });
+
+    expect(resultado.exito).toBe(true);
+    expect(resultado.detalles.find((d) => d.regla === "Especialidad del Médico").pasa).toBe(true);
+  });
+
   test("rechaza la cirugía y da mensaje de fatiga cuando el médico excede horas continuas", async () => {
     // > 44 horas semanales fuerza horasTurnoContinuo = 13 (> 12, dispara ReglaFatigaMedica)
     mockApisExternas({ apto: true, horasSemanales: 50, insumosDisponibles: true });

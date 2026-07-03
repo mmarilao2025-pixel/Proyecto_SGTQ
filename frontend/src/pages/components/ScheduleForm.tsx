@@ -38,9 +38,11 @@ const ScheduleForm: React.FC = () => {
 
       if (doctoresDisponibles.length > 0) {
         // Le decimos explícitamente que 'a' y 'b' son TeamMember
-        doctoresDisponibles.sort((a: TeamMember, b: TeamMember) =>
-          a.status === "DISPONIBLE" ? -1 : 1,
-        );
+        doctoresDisponibles.sort((a: TeamMember, b: TeamMember) => {
+          if (a.status === "DISPONIBLE" && b.status !== "DISPONIBLE") return -1;
+          if (a.status !== "DISPONIBLE" && b.status === "DISPONIBLE") return 1;
+          return 0;
+        });
         setMedicoAsignado(doctoresDisponibles[0]);
       } else {
         setMedicoAsignado(null);
@@ -100,7 +102,7 @@ const ScheduleForm: React.FC = () => {
           Formulario de Ingreso Quirúrgico
         </h2>
         <p className="text-sm text-gray-500">
-          El sistema asignará automáticamente al profesional idóneo disponible.
+          Seleccione el médico adecuado al procedimiento o deje el campo vacío para que el sistema sugiera un profesional disponible.
         </p>
       </div>
 

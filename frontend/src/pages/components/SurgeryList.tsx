@@ -60,6 +60,8 @@ const SurgeryList: React.FC = () => {
               <th className="px-4 py-2 text-left">Pabellón</th>
               <th className="px-4 py-2 text-left">Estado</th>
               <th className="px-4 py-2 text-left">UCI</th>
+              <th className="px-4 py-2 text-left">Médico</th>
+              <th className="px-4 py-2 text-left">Cama UCI</th>
             </tr>
           </thead>
           <tbody>
@@ -67,9 +69,7 @@ const SurgeryList: React.FC = () => {
               <tr key={surgery.id} className="border-b hover:bg-gray-50">
                 <td className="px-4 py-2">{surgery.patient}</td>
                 <td className="px-4 py-2">{surgery.type}</td>
-                <td className="px-4 py-2">
-                  {surgery.startTime} - {surgery.endTime}
-                </td>
+                <td className="px-4 py-2">{surgery.startTime} - {surgery.endTime}</td>
                 <td className="px-4 py-2">Pab. {surgery.pabellon}</td>
                 <td className="px-4 py-2">
                   <span
@@ -79,6 +79,8 @@ const SurgeryList: React.FC = () => {
                   </span>
                 </td>
                 <td className="px-4 py-2">{surgery.requiereUCI ? "✓" : "-"}</td>
+                <td className="px-4 py-2">{surgery.medico ?? 'No asignado'}</td>
+                <td className="px-4 py-2">{surgery.cama ?? '-'}</td>
               </tr>
             ))}
           </tbody>

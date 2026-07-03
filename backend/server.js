@@ -1,5 +1,4 @@
 const { FatigueTransactionService } = require('../shared/api/database/services/FatigueTransactionService');
-const { GestorEventosQuirurgicos, ObservadorNotificaciones } = require('./comportamiento_observador');
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config({ path: '../shared/config/env/.env' });
@@ -12,7 +11,6 @@ const { setupSwagger } = require('./swagger');
 // Importar servicios
 const { agendarCirugiaAtomica } = require("./cirugiaService");
 const { GestorCirugiasFacade } = require("./SurgeryBookingFacade");
-const { notificarEvento } = require("./comportamiento_observador");
 const {
   obtenerEstadisticasEventos,
   GestorEventosSingleton,
@@ -23,12 +21,23 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const distPath = path.join(__dirname, "dist");
 
+function formatLocalTimestamp(date) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+function parseLocalTimestamp(dateTimeString) {
+  const [datePart, timePart] = dateTimeString.split(" ");
+  const [year, month, day] = datePart.split("-").map(Number);
+  const [hour, minute, second = 0] = timePart.split(":").map(Number);
+  return new Date(year, month - 1, day, hour, minute, second);
+}
+
 // Configuración de Servidor HTTP y WebSockets
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: { origin: "*" },
 });
-
 // Middlewares
 app.use(cors());
 app.use(express.json());
@@ -89,7 +98,7 @@ app.get("/api/dashboard", (req, res) => {
       ],
     };
     res.json(dashboardData);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Error al obtener datos del dashboard" });
   }
 });
@@ -100,7 +109,6 @@ app.get("/api/dashboard", (req, res) => {
  */
 app.post("/api/surgery/schedule", async (req, res) => {
   try {
-    // 1. Extraemos los datos que envía el frontend (¡Aquí capturamos los nuevos!)
     const {
       rutPaciente,
       tipoCirugia,
@@ -110,68 +118,180 @@ app.post("/api/surgery/schedule", async (req, res) => {
       duracionEstimada,
     } = req.body;
 
-    if (!rutPaciente || !medicoId || !quirofanoId || !fechaHora) {
+    if (!rutPaciente || !quirofanoId || !fechaHora) {
       return res
         .status(400)
         .json({ error: "Faltan datos obligatorios para agendar." });
     }
 
-    // 2. Armamos el Payload para el Motor SOLID
+    const pool = db.getPool();
+
+    const cirugiaExistente = await pool.query(`
+      SELECT id FROM Cirugias
+      WHERE paciente_rut = $1
+        AND estado IN ('Programada', 'En Progreso')
+      LIMIT 1
+    `, [rutPaciente]);
+
+    if (cirugiaExistente.rows.length > 0) {
+      return res.status(400).json({
+        exito: false,
+        mensaje: "El paciente ya tiene una cirugía programada o en progreso.",
+      });
+    }
+
+    const normalizarTexto = (texto) =>
+      texto
+        ? texto
+            .normalize("NFD")
+            .replace(/\p{Diacritic}/gu, "")
+            .toLowerCase()
+            .trim()
+        : "";
+
+    const canonizarEspecialidad = (texto) => {
+      const clave = normalizarTexto(texto);
+      const equivalencias = {
+        "cirugia general": "Cirugía General",
+        "cardiovascular": "Cardiovascular",
+        "cardiologia": "Cardiovascular",
+        "cirugia cardiaca": "Cardiovascular",
+        "ortopedia": "Ortopedia",
+        "neurocirugia": "Neurocirugía",
+        "ginecologia": "Ginecología",
+      };
+      return equivalencias[clave] || texto;
+    };
+
+    const especialidadPorCirugia = {
+      [normalizarTexto("Apendicectomía")]: "Cirugía General",
+      [normalizarTexto("Colecistectomía")]: "Cirugía General",
+      [normalizarTexto("Colecistectomia")]: "Cirugía General",
+      [normalizarTexto("Colestectomía")]: "Cirugía General",
+      [normalizarTexto("Colestectomia")]: "Cirugía General",
+      [normalizarTexto("Hernioplastia")]: "Cirugía General",
+      [normalizarTexto("Cirugía Cardíaca")]: "Cardiovascular",
+      [normalizarTexto("Angioplastia")]: "Cardiovascular",
+      [normalizarTexto("Ortopedia")]: "Ortopedia",
+      [normalizarTexto("Neurocirugía")]: "Neurocirugía",
+      [normalizarTexto("Cesárea")]: "Ginecología",
+    };
+    const especialidadRequerida = canonizarEspecialidad(
+      especialidadPorCirugia[normalizarTexto(tipoCirugia)] || "Cirugía General",
+    );
+
+    // ✅ ASIGNACIÓN AUTOMÁTICA DE MÉDICO en función de la especialidad requerida
+    let medicoAsignado = medicoId;
+    let medicoEspecialidad = null;
+    if (medicoAsignado) {
+      const medicoRes = await pool.query(
+        `SELECT especialidad FROM Medicos WHERE id = $1`,
+        [medicoAsignado],
+      );
+      if (medicoRes.rows.length === 0) {
+        return res.status(400).json({
+          exito: false,
+          mensaje: "No se encontró el médico seleccionado.",
+        });
+      }
+      medicoEspecialidad = canonizarEspecialidad(medicoRes.rows[0].especialidad);
+
+      const especialidadDelMedico = medicoEspecialidad;
+      if (medicoId && especialidadDelMedico !== especialidadRequerida) {
+        return res.status(400).json({
+          exito: false,
+          mensaje: `El médico seleccionado pertenece a ${especialidadDelMedico} y no coincide con la especialidad requerida (${especialidadRequerida}).`,
+        });
+      }
+    }
+
+    if (!medicoAsignado) {
+      const medicoRes = await pool.query(`
+        SELECT id, especialidad FROM Medicos
+        WHERE estado = 'Disponible'
+          AND horas_semanales_acumuladas < 44
+        ORDER BY horas_semanales_acumuladas ASC
+      `);
+
+      const medicoEncontrado = medicoRes.rows.find((m) =>
+        canonizarEspecialidad(m.especialidad) === especialidadRequerida,
+      );
+
+      if (!medicoEncontrado) {
+        return res.status(400).json({
+          error: `No hay médicos disponibles en la especialidad solicitada: ${especialidadRequerida}.`,
+        });
+      }
+
+      medicoAsignado = medicoEncontrado.id;
+      medicoEspecialidad = canonizarEspecialidad(medicoEncontrado.especialidad);
+    }
+
+    // ✅ Payload corregido — pacienteId ya no llega undefined
     const payload = {
+      pacienteId: rutPaciente,
       rutPaciente: rutPaciente,
       tipoCirugia: tipoCirugia,
-      medicoId: medicoId,
+      medicoId: medicoAsignado,
+      medicoEspecialidad: medicoEspecialidad,
+      especialidadRequerida,
       quirofanoId: quirofanoId,
       fechaHora: fechaHora,
       duracionEstimada: duracionEstimada || 60,
-      medicoHoras: 30, // Simulado para la validación
     };
 
-    const pool = db.getPool();
-
-    // 3. Ejecutamos el Facade (Aquí ocurre la magia de las validaciones de horario)
-    const facade = new GestorCirugiasFacade(); // O new SurgeryBookingFacade() según el que uses
+    // Ejecutamos el Facade con las validaciones SOLID
+    const facade = new GestorCirugiasFacade();
     const resultado = await facade.validarYAgendarCirugia(payload, pool);
 
     if (resultado.exito) {
-      // Guardamos en la base de datos real
+      // Guardamos en la base de datos
       const insertQuery = `
-                INSERT INTO Cirugias (paciente_rut, medico_id, pabellon_id, tipo_cirugia, fecha_hora, duracion_estimada_minutos, estado)
-                VALUES ($1, $2, $3, $4, $5, $6, 'Programada')
-                RETURNING id;
-            `;
+        INSERT INTO Cirugias (paciente_rut, medico_id, pabellon_id, tipo, fecha_inicio, fecha_fin, estado)
+        VALUES ($1, $2, $3, $4, $5, $6, 'Programada')
+        RETURNING id;
+      `;
+      const fechaInicioDate = parseLocalTimestamp(fechaHora);
+      const fechaFinDate = new Date(fechaInicioDate.getTime() + payload.duracionEstimada * 60000);
+      const fechaInicioLocal = formatLocalTimestamp(fechaInicioDate);
+      const fechaFinLocal = formatLocalTimestamp(fechaFinDate);
       const valoresInsert = [
         rutPaciente,
-        medicoId,
+        medicoAsignado,
         quirofanoId,
         tipoCirugia,
-        fechaHora,
-        payload.duracionEstimada,
+        fechaInicioLocal,
+        fechaFinLocal,
       ];
       const nuevaCirugia = await pool.query(insertQuery, valoresInsert);
+      const horasAsignadas = Math.max(1, Math.ceil(payload.duracionEstimada / 60));
+      await pool.query(
+        `UPDATE Medicos SET horas_semanales_acumuladas = horas_semanales_acumuladas + $1 WHERE id = $2`,
+        [horasAsignadas, medicoAsignado],
+      );
 
-      // === INSTANCIACIÓN Y USO DEL PATRÓN OBSERVER ===
+      // Observer — notificar cirugía aprobada
       const gestorEventos = new GestorEventosQuirurgicos();
       const moduloNotificaciones = new ObservadorNotificaciones();
-
-      // Suscribimos el observador de WhatsApp al gestor de eventos
-      gestorEventos.suscribir(moduloNotificaciones);
-
-      // Notificamos el evento pasándole los datos del payload
+      gestorEventos.suscribir("cirugia_aprobada", moduloNotificaciones);
       gestorEventos.notificar("cirugia_aprobada", payload);
-      // ===============================================
 
       res.status(200).json({
         exito: true,
         mensaje: resultado.mensaje,
         cirugiaId: nuevaCirugia.rows[0].id,
+        medicoAsignado: medicoAsignado,
+      });
+    } else {
+      res.status(400).json({
+        exito: false,
+        mensaje: resultado.mensaje,
+        detalles: resultado.detalles,
       });
     }
   } catch (error) {
     console.error("Error en /api/surgery/schedule:", error);
-    res
-      .status(500)
-      .json({ error: "Error interno del servidor al procesar la cirugía." });
+    res.status(500).json({ error: "Error interno del servidor al procesar la cirugía." });
   }
 });
 
@@ -179,7 +299,7 @@ app.get("/api/events/stats", (req, res) => {
   try {
     const stats = obtenerEstadisticasEventos();
     res.json(stats);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Error al obtener métricas de eventos" });
   }
 });
@@ -219,7 +339,7 @@ app.post("/api/surgery/atomic", async (req, res) => {
 
     if (resultado.exito) res.json(resultado);
     else res.status(400).json(resultado);
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Error en transacción de cirugía" });
   }
 });
@@ -235,7 +355,7 @@ app.get("/api/resources", (req, res) => {
       insumos: { ok: true, cantidad: 150, porcentaje: 75 },
       pabellones: { total: 5, disponibles: 2, ocupados: 3 },
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: "Error al obtener recursos" });
   }
 });
@@ -243,36 +363,35 @@ app.get("/api/resources", (req, res) => {
 /**
  * GET /api/team
  */
-app.get("/api/team", (req, res) => {
+app.get("/api/team", async (req, res) => {
   try {
-    res.json([
-      {
-        id: 1,
-        name: "Dr. Andrés Morales",
-        specialty: "Cirugía General",
-        status: "ALERTA",
-        horasAcumuladas: 40,
-        disponible: false,
-      },
-      {
-        id: 2,
-        name: "Dr. Felipe Soto",
-        specialty: "Cardiovascular",
-        status: "BLOQUEADO",
-        horasAcumuladas: 48,
-        disponible: false,
-      },
-      {
-        id: 3,
-        name: "Dra. María García",
-        specialty: "Ginecología",
-        status: "DISPONIBLE",
-        horasAcumuladas: 32,
-        disponible: true,
-      },
-    ]);
+    const pool = db.getPool();
+    const result = await pool.query(`
+      SELECT 
+        id,
+        nombre AS name,
+        especialidad AS specialty,
+        horas_semanales_acumuladas AS "horasAcumuladas",
+        estado,
+        CASE 
+          WHEN estado = 'Disponible' AND horas_semanales_acumuladas < 36 THEN 'DISPONIBLE'
+          WHEN estado = 'Disponible' AND horas_semanales_acumuladas >= 36 THEN 'ALERTA'
+          ELSE 'BLOQUEADO'
+        END AS status,
+        CASE 
+          WHEN estado = 'Disponible' THEN true 
+          ELSE false 
+        END AS disponible,
+        UPPER(
+          SUBSTRING(nombre FROM 1 FOR 1) ||
+          COALESCE(SUBSTRING(nombre FROM POSITION(' ' IN nombre) + 1 FOR 1), '')
+        ) AS initials
+      FROM Medicos
+      ORDER BY horas_semanales_acumuladas ASC
+    `);
+    res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener equipo" });
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -291,10 +410,20 @@ app.get("/api/patients/:rut", async (req, res) => {
                 rut, 
                 nombre, 
                 sexo, 
-                prevision, 
+                prevision AS "previsionSalud", 
+                isapre_plan AS "planIsapre",
                 tipo_sangre AS "tipoSangre", 
                 alergias, 
-                enfermedades_cronicas AS "enfermedadesCronicas"
+                enfermedades_cronicas AS "enfermedadesCronicas",
+                telefono,
+                email,
+                direccion,
+                contacto_emergencia_nombre AS "contactoEmergenciaNombre",
+                contacto_emergencia_telefono AS "contactoEmergenciaTelefono",
+                peso_kg AS "peso",
+                altura_cm AS "altura",
+                observaciones_medicas AS "observacionesMedicas",
+                estado AS "estadoPaciente"
             FROM Pacientes 
             WHERE rut = $1;
         `;
@@ -324,7 +453,27 @@ app.get("/api/patients/:rut", async (req, res) => {
  */
 app.post("/api/patients", async (req, res) => {
   try {
-    const { rut, nombre, fechaNacimiento, telefono, email } = req.body;
+    const {
+      rut,
+      nombre,
+      fechaNacimiento,
+      telefono,
+      email,
+      sexo,
+      direccion,
+      contactoEmergenciaNombre,
+      contactoEmergenciaTelefono,
+      previsionSalud,
+      prevision,
+      planIsapre,
+      tipoSangre,
+      alergias,
+      enfermedadesCronicas,
+      peso,
+      altura,
+      observacionesMedicas,
+      estadoPaciente,
+    } = req.body;
 
     // Validar campos obligatorios según la BD (001_initial_schema.sql)
     if (!rut || !nombre || !fechaNacimiento) {
@@ -333,9 +482,26 @@ app.post("/api/patients", async (req, res) => {
       });
     }
 
+    const tipoSangreLimpio =
+      typeof tipoSangre === "string" && tipoSangre.length <= 10
+        ? tipoSangre
+        : null;
+
+    const previsionFinal =
+      typeof previsionSalud === "string"
+        ? previsionSalud
+        : typeof prevision === "string"
+        ? prevision
+        : null;
+
     const insertQuery = `
-            INSERT INTO Pacientes (rut, nombre, fecha_nacimiento, telefono, email) 
-            VALUES ($1, $2, $3, $4, $5) 
+            INSERT INTO Pacientes (
+              rut, nombre, fecha_nacimiento, telefono, email,
+              sexo, direccion, contacto_emergencia_nombre, contacto_emergencia_telefono,
+              prevision, isapre_plan, tipo_sangre, alergias, enfermedades_cronicas,
+              peso_kg, altura_cm, observaciones_medicas, estado
+            ) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
             RETURNING *;
         `;
 
@@ -345,6 +511,19 @@ app.post("/api/patients", async (req, res) => {
       fechaNacimiento,
       telefono || null,
       email || null,
+      sexo || null,
+      direccion || null,
+      contactoEmergenciaNombre || null,
+      contactoEmergenciaTelefono || null,
+      previsionFinal || null,
+      planIsapre || null,
+      tipoSangreLimpio,
+      alergias && alergias.length ? alergias : [],
+      enfermedadesCronicas && enfermedadesCronicas.length ? enfermedadesCronicas : [],
+      peso || null,
+      altura || null,
+      observacionesMedicas || null,
+      estadoPaciente || 'Activo',
     ];
     const resultado = await db.query(insertQuery, valores);
 
@@ -368,32 +547,30 @@ app.post("/api/patients", async (req, res) => {
 /**
  * GET /api/surgeries
  */
-app.get("/api/surgeries", (req, res) => {
+app.get("/api/surgeries", async (req, res) => {
   try {
-    res.json([
-      {
-        id: 1,
-        patient: "Juan Pérez",
-        type: "Apendicectomía",
-        startTime: "08:00",
-        endTime: "09:30",
-        pabellon: 1,
-        status: "EN PROGRESO",
-        requiereUCI: true,
-      },
-      {
-        id: 2,
-        patient: "María López",
-        type: "Colecistectomía",
-        startTime: "10:00",
-        endTime: "11:45",
-        pabellon: 2,
-        status: "PROGRAMADA",
-        requiereUCI: false,
-      },
-    ]);
+    const pool = db.getPool();
+    const result = await pool.query(`
+      SELECT 
+        c.id,
+        p.nombre AS patient,
+        c.tipo AS type,
+        TO_CHAR(c.fecha_inicio, 'HH24:MI') AS "startTime",
+        TO_CHAR(c.fecha_fin, 'HH24:MI') AS "endTime",
+        c.pabellon_id AS pabellon,
+        UPPER(c.estado) AS status,
+        COALESCE(c.requiere_uci, false) AS "requiereUCI",
+        m.nombre AS medico,
+        c.cama_id AS cama
+      FROM Cirugias c
+      JOIN Pacientes p ON p.rut = c.paciente_rut
+      LEFT JOIN Medicos m ON m.id = c.medico_id
+      ORDER BY c.fecha_inicio DESC
+    `);
+    res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener cirugías" });
+    console.error("Error en /api/surgeries:", error);
+    res.status(500).json({ error: "Error interno al obtener cirugías" });
   }
 });
 
@@ -423,46 +600,6 @@ app.post('/api/team/reset-fatigue', async (req, res) => {
     }
 });
 
-/**
- * POST /api/patients
- * Registra un nuevo paciente
- */
-app.post('/api/patients', async (req, res) => {
-    try {
-        const { rut, nombre, fechaNacimiento, telefono, email } = req.body;
-
-        // Validar campos obligatorios de la tabla
-        if (!rut || !nombre || !fechaNacimiento) {
-            return res.status(400).json({ 
-                error: 'Faltan campos obligatorios: rut, nombre o fecha de nacimiento' 
-            });
-        }
-
-        const db = require('../shared/config/Database');
-        
-        const insertQuery = `
-            INSERT INTO Pacientes (rut, nombre, fecha_nacimiento, telefono, email) 
-            VALUES ($1, $2, $3, $4, $5) 
-            RETURNING *;
-        `;
-        
-        const valores = [rut, nombre, fechaNacimiento, telefono || null, email || null];
-        const resultado = await db.query(insertQuery, valores);
-
-        // Retornamos 201 (Created) con los datos del paciente
-        res.status(201).json({
-            exito: true,
-            mensaje: 'Paciente registrado exitosamente',
-            paciente: resultado.rows[0]
-        });
-
-    } catch (error) {
-        console.error('Error en POST /api/patients:', error.message);
-        if (error.code === '23505') { // Código de error de PostgreSQL para "Unique violation"
-            return res.status(409).json({ error: 'El RUT ingresado ya está registrado' });
-        }
-        res.status(500).json({ error: 'Error interno al registrar el paciente' });
-    }
 app.get("/api/health", (req, res) => {
   res.json({ status: "OK", timestamp: new Date().toISOString() });
 });
@@ -474,6 +611,7 @@ app.get("*", (req, res, next) => {
 });
 
 // ============ MANEJO DE ERRORES ============
+/* eslint-disable-next-line no-unused-vars */
 app.use((err, req, res, next) => {
   console.error("Error no manejado:", err);
   res.status(500).json({ error: "Error interno del servidor" });
@@ -495,7 +633,6 @@ const broadcaster = new SocketBroadcaster();
 gestorEventos.suscribir("cirugia_aprobada", broadcaster);
 gestorEventos.suscribir("cirugia_rechazada", broadcaster);
 gestorEventos.suscribir("emergencia_medica", broadcaster);
-});
 io.on("connection", (socket) => {
   console.log("🔌 Nuevo cliente de dashboard conectado:", socket.id);
 });

@@ -12,7 +12,7 @@ console.log("🏥 DEMOSTRACIÓN DEL PATRÓN OBSERVER EN SGTQ\n");
 
 // Inicializar el sistema de eventos
 console.log("1️⃣ Inicializando sistema de eventos...");
-const gestorEventos = GestorEventosSingleton.obtenerInstancia();
+GestorEventosSingleton.obtenerInstancia();
 console.log("✅ Sistema inicializado con observadores por defecto\n");
 
 // Crear un observador personalizado para demostración

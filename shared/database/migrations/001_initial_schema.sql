@@ -6,8 +6,21 @@ CREATE TABLE IF NOT EXISTS Pacientes (
     rut VARCHAR(12) PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     fecha_nacimiento DATE NOT NULL,
+    sexo VARCHAR(20),
     telefono VARCHAR(15),
     email VARCHAR(100),
+    direccion VARCHAR(200),
+    contacto_emergencia_nombre VARCHAR(100),
+    contacto_emergencia_telefono VARCHAR(20),
+    prevision VARCHAR(50),
+    isapre_plan VARCHAR(100),
+    tipo_sangre VARCHAR(10),
+    alergias TEXT[] DEFAULT ARRAY[]::TEXT[],
+    enfermedades_cronicas TEXT[] DEFAULT ARRAY[]::TEXT[],
+    peso_kg NUMERIC(5,2),
+    altura_cm NUMERIC(5,2),
+    observaciones_medicas TEXT,
+    estado VARCHAR(20) DEFAULT 'Activo',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -1,7 +1,7 @@
 // backend/PriorityStrategy.js
 
 class PriorityStrategy {
-  calculateScore(surgeryContext) {
+  calculateScore() {
     throw new Error("Method 'calculateScore()' must be implemented.");
   }
 }

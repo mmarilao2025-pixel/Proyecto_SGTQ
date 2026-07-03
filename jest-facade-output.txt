@@ -1,0 +1,202 @@
+
+> proyecto-sgtq@1.0.0 test
+> jest backend/tests/Surgerybookingfacade.test.js --runInBand
+
+  console.log
+    
+    === SGTQ: Iniciando validaci+¦n multicriterio ===
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:35:13)
+
+  console.log
+    Paciente: 1 | M+®dico: 1 | Tipo: Apendicectom+¡a
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:36:13)
+
+  console.log
+    ÔåÆ Consultando APIs externas en paralelo...
+
+      at GestorCirugiasFacade.log [as _construirContexto] (backend/SurgeryBookingFacade.js:99:13)
+
+  console.log
+      Lab: apto=true | RRHH: horas=10 | Inventario: ok=true
+
+      at GestorCirugiasFacade.log [as _construirContexto] (backend/SurgeryBookingFacade.js:108:13)
+
+  console.log
+    Ô£à Todas las validaciones pasaron ÔÇö Cirug+¡a habilitada para agendamiento
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:49:17)
+
+  console.log
+    
+    === SGTQ: Iniciando validaci+¦n multicriterio ===
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:35:13)
+
+  console.log
+    Paciente: 1 | M+®dico: 1 | Tipo: Apendicectom+¡a
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:36:13)
+
+  console.log
+    ÔåÆ Consultando APIs externas en paralelo...
+
+      at GestorCirugiasFacade.log [as _construirContexto] (backend/SurgeryBookingFacade.js:99:13)
+
+  console.log
+      Lab: apto=true | RRHH: horas=50 | Inventario: ok=true
+
+      at GestorCirugiasFacade.log [as _construirContexto] (backend/SurgeryBookingFacade.js:108:13)
+
+  console.log
+    ÔØî Validaci+¦n rechazada ÔÇö 1 regla(s) fallida(s)
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:72:17)
+
+  console.log
+    
+    === SGTQ: Iniciando validaci+¦n multicriterio ===
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:35:13)
+
+  console.log
+    Paciente: 1 | M+®dico: 1 | Tipo: Apendicectom+¡a
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:36:13)
+
+  console.log
+    ÔåÆ Consultando APIs externas en paralelo...
+
+      at GestorCirugiasFacade.log [as _construirContexto] (backend/SurgeryBookingFacade.js:99:13)
+
+  console.log
+      Lab: apto=false | RRHH: horas=10 | Inventario: ok=true
+
+      at GestorCirugiasFacade.log [as _construirContexto] (backend/SurgeryBookingFacade.js:108:13)
+
+  console.log
+    ÔØî Validaci+¦n rechazada ÔÇö 1 regla(s) fallida(s)
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:72:17)
+
+  console.log
+    
+    === SGTQ: Iniciando validaci+¦n multicriterio ===
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:35:13)
+
+  console.log
+    Paciente: 1 | M+®dico: 1 | Tipo: Apendicectom+¡a
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:36:13)
+
+  console.log
+    ÔåÆ Consultando APIs externas en paralelo...
+
+      at GestorCirugiasFacade.log [as _construirContexto] (backend/SurgeryBookingFacade.js:99:13)
+
+  console.log
+      Lab: apto=true | RRHH: horas=10 | Inventario: ok=false
+
+      at GestorCirugiasFacade.log [as _construirContexto] (backend/SurgeryBookingFacade.js:108:13)
+
+  console.log
+    ÔØî Validaci+¦n rechazada ÔÇö 1 regla(s) fallida(s)
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:72:17)
+
+  console.log
+    
+    === SGTQ: Iniciando validaci+¦n multicriterio ===
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:35:13)
+
+  console.log
+    Paciente: 1 | M+®dico: 1 | Tipo: Apendicectom+¡a
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:36:13)
+
+  console.log
+    ÔåÆ Consultando APIs externas en paralelo...
+
+      at GestorCirugiasFacade.log [as _construirContexto] (backend/SurgeryBookingFacade.js:99:13)
+
+  console.log
+      Lab: apto=true | RRHH: horas=10 | Inventario: ok=true
+
+      at GestorCirugiasFacade.log [as _construirContexto] (backend/SurgeryBookingFacade.js:108:13)
+
+  console.log
+    ÔØî Validaci+¦n rechazada ÔÇö 1 regla(s) fallida(s)
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:72:17)
+
+  console.log
+    
+    === SGTQ: Iniciando validaci+¦n multicriterio ===
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:35:13)
+
+  console.log
+    Paciente: 1 | M+®dico: 1 | Tipo: Apendicectom+¡a
+
+      at GestorCirugiasFacade.log [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:36:13)
+
+  console.log
+    ÔåÆ Consultando APIs externas en paralelo...
+
+      at GestorCirugiasFacade.log [as _construirContexto] (backend/SurgeryBookingFacade.js:99:13)
+
+  console.error
+    Error en GestorCirugiasFacade: Laboratorio ca+¡do
+
+    [0m [90m 80 |[39m       }
+     [90m 81 |[39m     } [36mcatch[39m (error) {
+    [31m[1m>[22m[39m[90m 82 |[39m       console[33m.[39merror([32m"Error en GestorCirugiasFacade:"[39m[33m,[39m error[33m.[39mmessage)[33m;[39m
+     [90m    |[39m               [31m[1m^[22m[39m
+     [90m 83 |[39m       [36mreturn[39m {
+     [90m 84 |[39m         exito[33m:[39m [36mfalse[39m[33m,[39m
+     [90m 85 |[39m         mensaje[33m:[39m [32m`Error interno al validar cirug+¡a: ${error.message}`[39m[33m,[39m[0m
+
+      at GestorCirugiasFacade.error [as validarYAgendarCirugia] (backend/SurgeryBookingFacade.js:82:15)
+      at Object.<anonymous> (backend/tests/Surgerybookingfacade.test.js:139:23)
+
+--------------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------
+File                                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                     
+--------------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------
+All files                             |   23.19 |    29.21 |   41.25 |   22.57 |                                                                       
+ backend                              |   32.51 |    34.66 |   48.52 |   31.84 |                                                                       
+  PriorityStrategy.js                 |       0 |        0 |       0 |       0 | 5-46                                                                  
+  SurgeryBookingFacade.js             |     100 |     92.1 |     100 |     100 | 37,98,152                                                             
+  api-documentation.js                |       0 |      100 |     100 |       0 | 192                                                                   
+  cirugiaService.js                   |       0 |        0 |       0 |       0 | 1-88                                                                  
+  comportamiento_observador.config.js |       0 |        0 |       0 |       0 | 4-167                                                                 
+  comportamiento_observador.js        |       0 |        0 |       0 |       0 | 4-315                                                                 
+  insumoService.js                    |       0 |        0 |       0 |       0 | 1-28                                                                  
+  motor_agendamiento.config.js        |       0 |        0 |       0 |       0 | 4-123                                                                 
+  motor_agendamiento.js               |   66.41 |     42.5 |    84.5 |   65.38 | 10-19,119,136-138,157-163,183-187,209-222,240-253,280-286,309,371-399 
+  swagger.js                          |       0 |      100 |       0 |       0 | 1-33                                                                  
+ backend/controllers                  |       0 |      100 |     100 |       0 |                                                                       
+  dashboardController.js              |       0 |      100 |     100 |       0 | 61                                                                    
+  eventsController.js                 |       0 |      100 |     100 |       0 | 40                                                                    
+  insumoController.js                 |       0 |      100 |     100 |       0 | 30                                                                    
+  resourcesController.js              |       0 |      100 |     100 |       0 | 58                                                                    
+  surgeriesController.js              |       0 |      100 |     100 |       0 | 39                                                                    
+  surgeryController.js                |       0 |      100 |     100 |       0 | 99                                                                    
+  teamController.js                   |       0 |      100 |     100 |       0 | 56                                                                    
+ shared/api                           |       0 |        0 |       0 |       0 |                                                                       
+  ExternalServicesApi.js              |       0 |        0 |       0 |       0 | 1-54                                                                  
+ shared/api/database/services         |       0 |        0 |       0 |       0 |                                                                       
+  FatigueTransactionService.js        |       0 |        0 |       0 |       0 | 1-144                                                                 
+  TransactionService.js               |       0 |      100 |       0 |       0 | 1-30                                                                  
+ shared/config                        |       0 |        0 |       0 |       0 |                                                                       
+  Database.js                         |       0 |        0 |       0 |       0 | 1-77                                                                  
+ shared/database                      |       0 |        0 |       0 |       0 |                                                                       
+  db-init.js                          |       0 |        0 |       0 |       0 | 1-129                                                                 
+--------------------------------------|---------|----------|---------|---------|-----------------------------------------------------------------------
+Test Suites: 1 passed, 1 total
+Tests:       6 passed, 6 total
+Snapshots:   0 total
+Time:        7.472 s
+Ran all test suites matching backend/tests/Surgerybookingfacade.test.js.

@@ -92,7 +92,9 @@ async function insertTestData(client) {
     await client.query(`
         INSERT INTO Medicos (nombre, especialidad, horas_semanales_acumuladas) VALUES
         ('Dr. Carlos Ruiz', 'Cirugía General', 20),
-        ('Dra. Ana López', 'Cardiología', 35)
+        ('Dra. Ana López', 'Cardiología', 35),
+        ('Dr. Luis Herrera', 'Ortopedia', 18),
+        ('Dra. Carmen Fuentes', 'Neurocirugía', 25)
         ON CONFLICT DO NOTHING
     `);
 

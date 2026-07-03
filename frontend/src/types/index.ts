@@ -7,6 +7,8 @@ export interface Surgery {
   pabellon: number;
   status: "PROGRAMADA" | "EN PROGRESO" | "COMPLETADA" | "CANCELADA";
   requiereUCI: boolean;
+  medico?: string;   
+  cama?: number;     
 }
 
 export interface TeamMember {
@@ -63,7 +65,7 @@ export interface EventStats {
   tiposEventos: Record<string, number>;
   ultimoEvento: {
     tipo: string;
-    datos: any;
+    datos: Record<string, unknown>;
     timestamp: string;
     id: string;
   };

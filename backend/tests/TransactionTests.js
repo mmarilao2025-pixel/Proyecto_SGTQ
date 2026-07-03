@@ -20,7 +20,7 @@ describe("Transaction Services - SGTQ", () => {
 
   test("TransactionService executeTransaction debe manejar commit exitoso", async () => {
     const result = await transactionService.executeTransaction(
-      async (client) => {
+      async () => {
         // Simular operación exitosa
         return { test: "success" };
       },
@@ -32,7 +32,7 @@ describe("Transaction Services - SGTQ", () => {
 
   test("TransactionService debe hacer rollback en error", async () => {
     const result = await transactionService.executeTransaction(
-      async (client) => {
+      async () => {
         throw new Error("Test error");
       },
     );
