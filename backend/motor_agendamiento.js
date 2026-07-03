@@ -378,21 +378,15 @@ class MotorAgendamiento {
   contarPorSeveridad(resultados) {
     const conteo = { CRITICA: 0, ALTA: 0, MEDIA: 0, BAJA: 0 };
     resultados.forEach((r) => {
-      if (Object.prototype.hasOwnProperty.call(conteo, r.severidad)) conteo[r.severidad]++;
+      if (Object.hasOwn(conteo, r.severidad)) conteo[r.severidad]++;
     });
     return conteo;
   }
 }
 
-// ==========================================
-// PUENTE DE INTEGRACIÓN (PATRÓN FACADE)
-// Conecta tu excelente Motor con el server.js
-// ==========================================
 class GestorCirugiasFacade {
   async validarYAgendarCirugia(payload, dbPool) {
     const motor = new MotorAgendamiento();
-
-    // Transformamos el payload básico de server.js en el súper "contexto" que pide tu motor
     const contexto = {
       ...payload,
       dbPool: dbPool,

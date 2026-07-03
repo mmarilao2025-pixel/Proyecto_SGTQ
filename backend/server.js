@@ -487,12 +487,12 @@ app.post("/api/patients", async (req, res) => {
         ? tipoSangre
         : null;
 
-    const previsionFinal =
-      typeof previsionSalud === "string"
-        ? previsionSalud
-        : typeof prevision === "string"
-        ? prevision
-        : null;
+    let previsionFinal = null;
+    if (typeof previsionSalud === "string") {
+      previsionFinal = previsionSalud;
+    } else if (typeof prevision === "string") {
+      previsionFinal = prevision;
+    }
 
     const insertQuery = `
             INSERT INTO Pacientes (
@@ -518,8 +518,8 @@ app.post("/api/patients", async (req, res) => {
       previsionFinal || null,
       planIsapre || null,
       tipoSangreLimpio,
-      alergias && alergias.length ? alergias : [],
-      enfermedadesCronicas && enfermedadesCronicas.length ? enfermedadesCronicas : [],
+      alergias?.length ? alergias : [],
+      enfermedadesCronicas?.length ? enfermedadesCronicas : [],
       peso || null,
       altura || null,
       observacionesMedicas || null,
