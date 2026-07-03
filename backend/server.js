@@ -5,7 +5,7 @@ const cors = require('cors');
 require('dotenv').config({ path: '../shared/config/env/.env' });
 const db = require('../shared/config/Database');
 const path = require('node:path');
-const { createServer } = require('http'); 
+const { createServer } = require('node:http'); 
 const { Server } = require('socket.io');
 const { setupSwagger } = require('./swagger');  
 
@@ -47,7 +47,7 @@ app.get("/api/insumos", async (req, res) => {
     const insumos = await obtenerInsumos();
     res.json(insumos);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener insumos" });
+    res.status(500).json({ error: error.message });
   }
 });
 

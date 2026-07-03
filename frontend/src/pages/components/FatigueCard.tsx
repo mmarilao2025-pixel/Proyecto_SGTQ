@@ -44,6 +44,17 @@ const FatigueCard: React.FC = () => {
     if (fatigue >= 50) return 'bg-amber-50 border-amber-200';
     return 'bg-emerald-50 border-emerald-200';
   };
+  const getStatusClass = (status: string) => {
+    if (status === 'BLOQUEADO') return 'bg-red-100 text-red-700 border border-red-200';
+    if (status === 'ALERTA') return 'bg-amber-100 text-amber-700 border border-amber-200';
+    return 'bg-emerald-100 text-emerald-700 border border-emerald-200';
+  };
+
+  const getStatusLabel = (status: string) => {
+    if (status === 'BLOQUEADO') return 'BLOQUEADO';
+    if (status === 'ALERTA') return 'EN ALERTA';
+    return 'HABILITADO';
+  };
 
   if (loading) {
     return (
@@ -120,14 +131,8 @@ const FatigueCard: React.FC = () => {
               </div>
               
               <div className="w-[110px] text-center">
-                <span className={`text-[10px] font-black px-2.5 py-1.5 rounded-lg w-full inline-block tracking-wide ${
-                  member.status === 'BLOQUEADO'
-                    ? 'bg-red-100 text-red-700 border border-red-200'
-                    : member.status === 'ALERTA'
-                    ? 'bg-amber-100 text-amber-700 border border-amber-200'
-                    : 'bg-emerald-100 text-emerald-700 border border-emerald-200'
-                }`}>
-                  {member.status === 'BLOQUEADO' ? 'BLOQUEADO' : member.status === 'ALERTA' ? 'EN ALERTA' : 'HABILITADO'}
+                <span className={`text-[10px] font-black px-2.5 py-1.5 rounded-lg w-full inline-block tracking-wide ${getStatusClass(member.status)}`}>
+                  {getStatusLabel(member.status)}
                 </span>
               </div>
             </div>

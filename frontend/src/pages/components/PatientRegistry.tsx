@@ -204,7 +204,7 @@ const PatientRegistry: React.FC<PatientRegistryProps> = ({ onPacienteValidado })
             </div>
           </div>
           <div className="mt-6 flex justify-end">
-            <button onClick={() => onPacienteValidado(pacienteEncontrado!)} className="bg-blue-600 text-white px-8 py-3 rounded-xl font-bold shadow-md hover:bg-blue-700 transition">
+            <button onClick={() => {if (pacienteEncontrado) onPacienteValidado(pacienteEncontrado);}}>
               Avanzar a Quirófano <i className="fa-solid fa-arrow-right ml-2"></i>
             </button>
           </div>
