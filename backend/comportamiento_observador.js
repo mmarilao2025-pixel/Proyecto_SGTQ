@@ -144,10 +144,13 @@ class ObservadorAdmision extends IObserver {
     this.pacientesAdmitidos = new Set();
   }
 
-  actualizar(/* evento, datos */) {
-    console.log(
-      `🏥 [ADMISIÓN] Paciente aprobado para cirugía. Preparando admisión.`,
-    );
+  actualizar(tipoEvento, datos) {
+    if (tipoEvento === 'cirugia_aprobada') {
+      if (datos.pacienteId !== undefined) {
+        this.pacientesAdmitidos.add(datos.pacienteId);
+      }
+      console.log('🏥 [ADMISIÓN] Paciente aprobado para cirugía. Preparando admisión.');
+    }
   }
 
   getNombre() {
@@ -198,10 +201,10 @@ class ObservadorRecuperacion extends IObserver {
     this.camasReservadas = new Map();
   }
 
-  actualizar(/* evento, datos */) {
-    console.log(
-      `🏥 [RECUPERACIÓN] Cirugía requiere UCI. Reservando cama.`,
-    );
+  actualizar(tipoEvento, datos) {
+    if (tipoEvento === 'cirugia_aprobada' && datos.requiereUci) {
+      console.log('[RECUPERACIÓN] Cirugía requiere UCI. Reservando cama.');
+    }
   }
 
   getNombre() {
