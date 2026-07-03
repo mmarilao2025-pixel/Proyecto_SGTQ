@@ -32,15 +32,14 @@ describe("cirugiaService.agendarCirugiaAtomica", () => {
     });
     db.getPool.mockReturnValue({ connect: jest.fn().mockResolvedValue(clienteFalso) });
 
-    const resultado = await agendarCirugiaAtomica(
-      "12345678-9",
-      1,
-      2,
-      "Apendicectomía",
-      "2026-01-01",
-      "2026-01-01",
-    );
-
+    const resultado = await agendarCirugiaAtomica({
+      rutPaciente: "12345678-9",
+      pabellonId: 1,
+      camaId: 2,
+      tipoCirugia: "Apendicectomía",
+      fechaInicio: "2026-01-01",
+      fechaFin: "2026-01-01",
+    });
     expect(resultado).toEqual({ exito: true, cirugia_id: 42 });
     expect(clienteFalso.query).toHaveBeenCalledWith("BEGIN");
     expect(clienteFalso.query).toHaveBeenCalledWith("COMMIT");
@@ -55,17 +54,17 @@ describe("cirugiaService.agendarCirugiaAtomica", () => {
     });
     db.getPool.mockReturnValue({ connect: jest.fn().mockResolvedValue(clienteFalso) });
 
-    const resultado = await agendarCirugiaAtomica(
-      "12345678-9",
-      1,
-      2,
-      "Cirugía Cardíaca",
-      "2026-01-01",
-      "2026-01-01",
-      true,
-      "O+",
-      3,
-    );
+    const resultado = await agendarCirugiaAtomica({
+      rutPaciente: "12345678-9",
+      pabellonId: 1,
+      camaId: 2,
+      tipoCirugia: "Cirugía Cardíaca",
+      fechaInicio: "2026-01-01",
+      fechaFin: "2026-01-01",
+      requiereTransfusion: true,
+      tipoSangre: "O+",
+      litrosSangre: 3,
+    });
 
     expect(resultado.exito).toBe(true);
     expect(descontarInsumoCirugia).toHaveBeenCalledWith(
@@ -83,14 +82,14 @@ describe("cirugiaService.agendarCirugiaAtomica", () => {
     });
     db.getPool.mockReturnValue({ connect: jest.fn().mockResolvedValue(clienteFalso) });
 
-    const resultado = await agendarCirugiaAtomica(
-      "12345678-9",
-      1,
-      2,
-      "Apendicectomía",
-      "2026-01-01",
-      "2026-01-01",
-    );
+    const resultado = await agendarCirugiaAtomica({
+      rutPaciente: "12345678-9",
+      pabellonId: 1,
+      camaId: 2,
+      tipoCirugia: "Apendicectomía",
+      fechaInicio: "2026-01-01",
+      fechaFin: "2026-01-01",
+    });
 
     expect(resultado.exito).toBe(false);
     expect(resultado.mensaje).toContain("no está disponible");
@@ -105,14 +104,14 @@ describe("cirugiaService.agendarCirugiaAtomica", () => {
     };
     db.getPool.mockReturnValue({ connect: jest.fn().mockResolvedValue(clienteFalso) });
 
-    const resultado = await agendarCirugiaAtomica(
-      "12345678-9",
-      1,
-      2,
-      "Apendicectomía",
-      "2026-01-01",
-      "2026-01-01",
-    );
+    const resultado = await agendarCirugiaAtomica({
+      rutPaciente: "12345678-9",
+      pabellonId: 1,
+      camaId: 2,
+      tipoCirugia: "Apendicectomía",
+      fechaInicio: "2026-01-01",
+      fechaFin: "2026-01-01",
+    });
 
     expect(resultado.exito).toBe(false);
     expect(clienteFalso.release).toHaveBeenCalled();
